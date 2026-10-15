@@ -106,6 +106,24 @@ Production art replaces the procedural placeholders. Each symbol needs **idle, l
 
 Export at 2x for desktop and at a 1x tier for low-end mobile. Use WebP atlases and keep the initial load under about 5 MB.
 
+### 3.1 UI spec (implemented in the prototype; the UI kit and PixiJS port should match it)
+
+| Element | Spec |
+|---|---|
+| Palette | Night lagoon `#070b1a`, sapphire panels `#0e1a3a` / `#15264f`, filigree gold `#f2c14e` (pale `#ffe7a3`), moonstone text `#c9d6f0`, muted `#8d9cc0`. Emerald `#14b85f` means "go" and ruby `#d4142f` means "stop" |
+| Type | Cinzel Decorative only for the game title; Cinzel for the win amount and panel headings; Manrope (tabular figures) for labels and numbers |
+| Spin gem | The signature control. An octagon-cut gem in a gold setting with four prongs. Emerald when idle with a slow glint every 5 s; ruby with a stop square while the reels run (press to skip); sapphire with the spins-left count during autoplay (press to stop). It rises 30% above the control bar |
+| Control bar | Landscape: menu and mute · balance · bet (−, tap the value to choose, +) · **spin** · win · Auto · Turbo. Phone landscape (height ≤ 520 px) hides mute, the session clock and the button labels. Portrait: reels on top, then a grid of balance and win / Auto, −, spin, +, Turbo / menu, bet, mute |
+| Portrait camera | The canvas fits the reel frame (world x 200–1080) to the screen width and sits the stage on the control bar. Extra height shows open sky |
+| Menu | One panel with Paytable, History and Settings tabs (arrow keys move between tabs). Panels open centred in landscape and as bottom sheets in portrait |
+| Autoplay | Limits must be chosen before it starts: spin count (10 / 25 / 50 / 100 / 250), loss limit (10x / 25x / 50x / 100x bet, checked before each bet) and single-win limit (off / 20x / 50x / 100x). Option to stop when Gem Rush starts, on by default. A toast gives the reason it stopped |
+| History | The last 50 rounds (time, bet, win, multiplier, Gem Rush spins), plus session rounds, total bet, total won and net |
+| Settings | Volume, sound effects, music, turbo, spin with the space bar, reduced motion. Saved per device in `localStorage` (optional) |
+| Session clock | Wall clock, session length and net, top left (bottom of the stage in portrait). A reality-check aid |
+| Reduced motion | Follows `prefers-reduced-motion` by default, with an in-game switch. It turns off fireflies, embers, coin showers, the title shimmer, ray rotation and the spin-gem glint, and shortens win counts (×0.4) and big wins (×0.5) |
+| Accessibility | Buttons are at least 40 px on phones in landscape and 44 px in portrait. Every control has a visible focus ring and an accessible name. Panels trap Tab, close on Escape or a backdrop tap, and return focus to the button that opened them. Wins are announced through a polite live region |
+| Keys | Space spins or skips (it can be turned off); Escape closes a panel |
+
 ---
 
 ## 4. Audio plan
@@ -140,7 +158,7 @@ The prototype synthesizes everything in WebAudio so it runs with no assets. For 
 
 ## 7. Known prototype gaps
 - **Placeholder art.** Symbols are drawn in code; production needs commissioned art.
-- **Layout.** Landscape only; a portrait mobile layout is still needed.
+- **Layout.** Landscape, phone landscape and portrait work (see §3.1). Tablet 4:3 uses the landscape layout with letterboxing.
 - **No automated parity test.** Nothing yet checks the JS engine against `engine.py`; write one that compares `lineWin` on random boards.
-- **No `prefers-reduced-motion` mode** and no autoplay limits yet.
+- **Responsible-gambling profiles.** Autoplay limits, reduced motion and a session clock are in. Jurisdiction switches (minimum spin time, no turbo, no autoplay) and a timed reality-check dialog are not.
 - **`StakeRGSProvider` is untested.** It is a skeleton and must be validated against the live RGS spec.

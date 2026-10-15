@@ -6,116 +6,299 @@
 <title>Island of Gems</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Cinzel+Decorative:wght@700;900&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #05070d;
-    --panel: rgba(17, 29, 40, .92);
-    --panel-line: #2a4152;
-    --text: #e8eef5;
-    --muted: #8aa0b4;
-    --accent: #1fd36b;
-    --gold: #f5c542;
+    --night: #070b1a; --sapphire: #0e1a3a; --sapphire-2: #15264f; --gold: #f2c14e; --gold-pale: #ffe7a3; --gold-deep: #8a5a0e;
+    --moon: #c9d6f0; --mist: #8d9cc0; --text: #eef2fb; --emerald: #14b85f; --emerald-hi: #4fe39a; --ruby: #d4142f;
+    --line: rgba(242, 193, 78, .32); --hair: rgba(201, 214, 240, .1);
+    --f-display: "Cinzel Decorative", "Cinzel", Georgia, serif; --f-title: "Cinzel", Georgia, serif; --f-ui: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --oct: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; height: 100%; background: var(--night); color: var(--text); font-family: var(--f-ui);
+    overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+  button:disabled { opacity: .35; cursor: default; }
+  :focus-visible { outline: 2px solid var(--gold-pale); outline-offset: 3px; }
+  svg { display: block; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---- shell: 16:9 stage with the deck over its foot (landscape) */
   #wrap { position: fixed; inset: 0; display: grid; place-items: center; }
-  #game { position: relative; width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; }
+  #shell { position: relative; width: min(100vw, calc(100vh * 16 / 9)); width: min(100vw, calc(100dvh * 16 / 9)); aspect-ratio: 16 / 9;
+    container-type: inline-size; overflow: hidden;
+    --b: clamp(40px, 3.4cqw, 60px); --spin: clamp(66px, 8.6cqw, 124px); --fs-l: clamp(9px, .78cqw, 12px); --fs-v: clamp(14px, 1.6cqw, 24px); --pad: clamp(8px, 1.6cqw, 28px); }
+  #stagebox { position: absolute; inset: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
+  #session { position: absolute; top: clamp(6px, .8cqw, 12px); left: clamp(8px, 1cqw, 16px); padding: .3em .8em; border-radius: 999px;
+    font-size: clamp(10px, .82cqw, 13px); font-weight: 700; color: var(--moon); font-variant-numeric: tabular-nums;
+    background: rgba(7, 11, 26, .62); border: 1px solid var(--hair); pointer-events: none; white-space: nowrap; }
+  #session i { font-style: normal; color: var(--mist); margin: 0 .45em; }
 
-  #hud { position: absolute; left: 0; right: 0; bottom: 0; height: 17%; display: flex; align-items: center; justify-content: center;
-    gap: 1.1cqw; padding: 0 2cqw; background: linear-gradient(to bottom, transparent, rgba(4, 7, 14, .88) 45%); }
-  .stat { background: var(--panel); border: 1px solid var(--panel-line); border-radius: .8cqw; padding: .55cqw 1.1cqw; min-width: 12.5cqw; }
-  .stat label { display: block; font-size: .8cqw; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
-  .stat b { font-size: 1.65cqw; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .stat small { font-size: .9cqw; color: var(--muted); margin-left: .3cqw; }
-  #win.flash { color: var(--gold); text-shadow: 0 0 1cqw rgba(245, 197, 66, .7); }
-  .betrow { display: flex; align-items: center; gap: .6cqw; }
-  .betrow b { min-width: 6cqw; text-align: center; }
-  button { font: inherit; color: inherit; cursor: pointer; border: 0; }
-  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .sq { width: 2.3cqw; height: 2.3cqw; border-radius: .5cqw; background: #22384a; font-size: 1.4cqw; line-height: 1; display: grid; place-items: center; }
-  .sq:hover { background: #2d4a61; }
-  .sq:disabled { opacity: .35; cursor: default; }
-  .icon { width: 3.6cqw; height: 3.6cqw; border-radius: 50%; background: var(--panel); border: 1px solid var(--panel-line); font-size: 1.4cqw; font-weight: 800; font-family: Georgia, serif; }
-  .toggles { display: flex; gap: .6cqw; }
-  .tog { height: 3.6cqw; padding: 0 1.1cqw; border-radius: .7cqw; background: var(--panel); border: 1px solid var(--panel-line); font-size: .95cqw; font-weight: 800; letter-spacing: .08em; color: var(--muted); }
-  .tog.on { color: #04140a; background: var(--accent); border-color: var(--accent); }
-  #spin { width: 8cqw; height: 8cqw; border-radius: 50%; position: relative; margin: 0 .8cqw;
-    background: radial-gradient(circle at 35% 30%, #7dffb2 0%, #19c45d 45%, #0b7f3a 100%);
-    box-shadow: 0 0 0 .35cqw #0d2a1a, 0 0 0 .55cqw #39e783, 0 .6cqw 1.6cqw rgba(0, 0, 0, .6), inset 0 -.5cqw 1cqw rgba(0, 0, 0, .35);
-    transition: transform .12s ease, filter .2s; }
-  #spin:hover { filter: brightness(1.08); }
-  #spin:active { transform: scale(.94); }
-  #spin svg { width: 55%; height: 55%; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
-  #spin.busy svg { animation: rot .55s linear infinite; }
-  #spin.stop { background: radial-gradient(circle at 35% 30%, #ffd77a 0%, #e9a51c 50%, #8a5a06 100%); box-shadow: 0 0 0 .35cqw #2a1d04, 0 0 0 .55cqw #ffcf4a, 0 .6cqw 1.6cqw rgba(0, 0, 0, .6); }
-  @keyframes rot { to { transform: rotate(360deg); } }
+  /* ---- control deck */
+  #deck { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    gap: clamp(8px, 1.2cqw, 20px); padding: 0 var(--pad) clamp(6px, .9cqw, 14px);
+    background: linear-gradient(180deg, rgba(7, 11, 26, 0), rgba(7, 11, 26, .88) 42%, rgba(7, 11, 26, .97)); }
+  .side { display: flex; align-items: center; gap: clamp(6px, .8cqw, 14px); min-width: 0; }
+  .side.l { justify-content: flex-end; }
+  .tools { display: flex; gap: clamp(6px, .6cqw, 10px); margin-right: auto; }
+  .plaque { display: flex; flex-direction: column; justify-content: center; height: var(--b); min-width: clamp(84px, 10.5cqw, 190px);
+    padding: 0 clamp(8px, 1cqw, 16px); border-radius: calc(var(--b) * .28); border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(21, 38, 79, .94), rgba(10, 18, 42, .94));
+    box-shadow: inset 0 1px 0 rgba(255, 231, 163, .14), 0 4px 14px rgba(0, 0, 0, .35); }
+  .lbl { display: block; font-size: var(--fs-l); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--mist); line-height: 1.15; }
+  .plaque b, #betVal b { font-size: var(--fs-v); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+  .plaque small { font-size: var(--fs-l); font-weight: 700; color: var(--mist); margin-left: .35em; }
+  #winBox b { font-family: var(--f-title); font-weight: 900; color: var(--gold-pale); transition: text-shadow .2s, color .2s; }
+  #winBox.flash { border-color: var(--gold); box-shadow: inset 0 1px 0 rgba(255, 231, 163, .3), 0 0 18px rgba(242, 193, 78, .35); }
+  #winBox.flash b { color: #fff6d0; text-shadow: 0 0 12px rgba(242, 193, 78, .8); }
+  .plaque.bet { flex-direction: row; align-items: center; gap: 4px; padding: 0 4px; }
+  #betVal { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: clamp(60px, 6cqw, 110px); border-radius: 8px; }
+  #betVal:not(:disabled):hover b { color: var(--gold-pale); }
+  .ib { width: var(--b); height: var(--b); flex: none; display: grid; place-items: center; border-radius: 50%; color: var(--gold-pale);
+    background: linear-gradient(180deg, rgba(21, 38, 79, .94), rgba(10, 18, 42, .94)); border: 1px solid var(--line); transition: border-color .15s, background .15s; }
+  .ib svg { width: 46%; height: 46%; }
+  .ib:not(:disabled):hover { border-color: var(--gold); background: var(--sapphire-2); }
+  .ib.sm { width: calc(var(--b) - 8px); height: calc(var(--b) - 8px); background: rgba(242, 193, 78, .08); }
+  #btnMute .i-off, #btnMute[aria-pressed="true"] .i-on { display: none; }
+  #btnMute[aria-pressed="true"] .i-off { display: block; }
+  .mode { height: var(--b); display: flex; align-items: center; gap: .5em; padding: 0 clamp(10px, 1cqw, 16px); border-radius: 999px;
+    font-size: var(--fs-l); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--moon);
+    background: linear-gradient(180deg, rgba(21, 38, 79, .94), rgba(10, 18, 42, .94)); border: 1px solid var(--line); transition: background .15s, color .15s; }
+  .mode svg { width: calc(var(--b) * .4); height: calc(var(--b) * .4); flex: none; }
+  .mode:hover { border-color: var(--gold); }
+  .mode[aria-pressed="true"] { color: #2a1700; border-color: var(--gold); background: linear-gradient(180deg, var(--gold-pale), var(--gold) 60%, #c8902e); }
 
-  .overlay { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(20, 10, 40, .82), rgba(2, 3, 8, .96)); z-index: 5; }
-  .overlay.hidden { display: none; }
-  #start .card { text-align: center; }
-  #start h1 { font-family: "Cinzel Decorative", Georgia, serif; font-size: 4.2cqw; margin: 0;
-    background: linear-gradient(180deg, #fff3c0, #f5c542 45%, #a8701f 70%, #ffe7a0); -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 .3cqw .6cqw rgba(0, 0, 0, .7)); }
-  #start .tagline { font-family: "Cinzel", Georgia, serif; letter-spacing: .12em; color: #f2d48a; font-size: 1.5cqw; margin: .4cqw 0 2.4cqw; }
-  #start button { font-size: 1.6cqw; font-weight: 800; letter-spacing: .15em; padding: 1.1cqw 3.4cqw; border-radius: 3cqw; color: #04140a;
-    background: linear-gradient(#5dffa0, #17b856); box-shadow: 0 0 2cqw rgba(31, 211, 107, .45); }
-  #start p { color: var(--muted); font-size: 1cqw; margin-top: 1.6cqw; }
-  #loading { color: var(--muted); font-size: 1.1cqw; letter-spacing: .1em; }
+  /* ---- signature: the Spin gem (octagon cut, gold setting, emerald → ruby while spinning) */
+  #spin { position: relative; width: var(--spin); height: var(--spin); margin-top: calc(var(--spin) * -.3); flex: none; border-radius: 30%;
+    --gl: #c8ffe0; --gb: #14b85f; --gd: #03401f; --glow: rgba(20, 184, 95, .45);
+    background: radial-gradient(circle at 14.6% 14.6%, #fff3c0 0 3%, #a8701f 4.6%, transparent 5.2%), radial-gradient(circle at 85.4% 14.6%, #fff3c0 0 3%, #a8701f 4.6%, transparent 5.2%),
+                radial-gradient(circle at 14.6% 85.4%, #fff3c0 0 3%, #a8701f 4.6%, transparent 5.2%), radial-gradient(circle at 85.4% 85.4%, #fff3c0 0 3%, #a8701f 4.6%, transparent 5.2%);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .6)) drop-shadow(0 0 16px var(--glow)); transition: transform .12s ease, filter .25s; }
+  #spin > span { position: absolute; clip-path: var(--oct); }
+  #spin .bezel { inset: 3%; background: conic-gradient(from 10deg, #fff3c0, #c8902e, #6e3f0c, #f9e08b, #a8701f, #fff3c0, #c8902e, #6e3f0c, #f9e08b, #fff3c0); }
+  #spin .stone { inset: 11%; overflow: hidden; transition: background .25s;
+    background: conic-gradient(from 22.5deg, var(--gl) 0 12.5%, var(--gb) 0 25%, var(--gd) 0 37.5%, var(--gb) 0 50%, var(--gd) 0 62.5%, var(--gb) 0 75%, var(--gl) 0 87.5%, var(--gb) 0); }
+  #spin .stone::after { content: ""; position: absolute; inset: -30%; background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, .7) 50%, transparent 58%);
+    transform: translateX(-130%); animation: glint 5s ease-in-out infinite; }
+  #spin .table { inset: 31%; background: linear-gradient(160deg, rgba(255, 255, 255, .55), var(--gb) 55%, var(--gd)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+  #spin svg, #spin em { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .7)); }
+  #spin svg { width: 40%; height: 40%; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+  #spin em { font-style: normal; font-weight: 800; font-size: calc(var(--spin) * .26); font-variant-numeric: tabular-nums; }
+  #spin .i-stop, #spin.stop .i-spin, #spin.auto .i-spin, #spin.auto .i-stop { display: none; }
+  #spin.stop .i-stop { display: block; }
+  #spin:not(.stop):not(.auto):hover .i-spin { transform: translate(-50%, -50%) rotate(-180deg); }
+  #spin:hover { transform: translateY(-2px); }
+  #spin:active { transform: scale(.95); }
+  #spin.stop, #spin.auto { --gl: #ffc4cc; --gb: #d4142f; --gd: #3f000b; --glow: rgba(212, 20, 47, .5); }
+  #spin.auto { --gl: #cfe6ff; --gb: #2258e6; --gd: #061758; --glow: rgba(34, 88, 230, .5); }
+  @keyframes glint { 0%, 72% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
 
-  #paytable .sheet { width: 78cqw; max-height: 86%; overflow: auto; background: #0e1822; border: 1px solid var(--panel-line); border-radius: 1.2cqw; padding: 2cqw 2.4cqw; position: relative; }
-  #paytable h2 { font-family: "Cinzel", Georgia, serif; color: var(--gold); margin: 0 0 1cqw; font-size: 2cqw; }
-  #paytable h3 { font-family: "Cinzel", Georgia, serif; color: #f2d48a; font-size: 1.3cqw; margin: 1.8cqw 0 .6cqw; }
-  #paytable .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1cqw; }
-  #paytable .sym { background: #13222f; border: 1px solid #22384a; border-radius: .8cqw; padding: .6cqw; display: flex; gap: .8cqw; align-items: center; }
-  #paytable .sym img { width: 6.5cqw; height: auto; }
-  #paytable .sym .nm { font-size: .85cqw; color: var(--muted); margin-bottom: .2cqw; }
-  #paytable .sym div { font-size: 1cqw; line-height: 1.45; font-variant-numeric: tabular-nums; }
-  #paytable .sym span { color: var(--gold); font-weight: 700; display: inline-block; width: 1.6cqw; }
-  #paytable p, #paytable li { font-size: 1.05cqw; line-height: 1.6; color: #c6d3df; }
-  #paytable .close { position: absolute; top: 1.2cqw; right: 1.4cqw; }
-  #paytable svg { width: 100%; height: auto; }
+  /* ---- overlays and sheets */
+  .overlay { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; padding: 12px; background: rgba(3, 5, 14, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .overlay[hidden] { display: none; }
+  .sheet { width: min(780px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; border: 1px solid var(--line);
+    background: linear-gradient(180deg, #111d40, #0a1230 60%); box-shadow: 0 30px 80px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 231, 163, .15); animation: sheetIn .22s ease-out; }
+  .sheet.narrow { width: min(520px, 100%); }
+  .sheet header { display: flex; align-items: center; gap: 12px; padding: 12px 12px 10px 20px; border-bottom: 1px solid rgba(242, 193, 78, .18); }
+  .sheet h2 { flex: 1; margin: 0; font-family: var(--f-title); font-size: 20px; letter-spacing: .06em; color: var(--gold); }
+  .sheet .close { --b: 40px; }
+  .sheet .body { overflow: auto; padding: 16px 20px 22px; font-size: 14px; line-height: 1.55; color: #d5def0; user-select: text; -webkit-user-select: text; }
+  .sheet h3 { margin: 22px 0 10px; font-family: var(--f-title); font-size: 15px; letter-spacing: .05em; color: var(--gold-pale); }
+  .sheet h3:first-child { margin-top: 0; }
+  .sheet ul { padding-left: 1.2em; margin: 0; }
+  .sheet li + li { margin-top: 6px; }
+  @keyframes sheetIn { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+  .tabs { flex: 1; display: flex; gap: 6px; }
+  .tab { min-height: 38px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mist); }
+  .tab:hover { color: var(--moon); }
+  .tab[aria-selected="true"] { color: var(--gold-pale); background: rgba(242, 193, 78, .14); box-shadow: inset 0 0 0 1px var(--line); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { min-width: 60px; min-height: 42px; padding: 0 14px; border-radius: 10px; font-weight: 800; font-variant-numeric: tabular-nums;
+    background: #13224a; border: 1px solid rgba(201, 214, 240, .16); transition: border-color .15s; }
+  .chip:hover { border-color: var(--gold); }
+  .chip[aria-pressed="true"] { color: #2a1700; border-color: var(--gold); background: linear-gradient(180deg, var(--gold-pale), var(--gold)); }
+  .field + .field { margin-top: 18px; }
+  .flabel { margin-bottom: 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--mist); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--hair); }
+  .row .hint { display: block; font-size: 12px; color: var(--mist); }
+  .switch { position: relative; width: 52px; height: 30px; flex: none; border-radius: 999px; background: #26355e; transition: background .18s; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--moon); transition: transform .18s; }
+  .switch[aria-checked="true"] { background: var(--emerald); }
+  .switch[aria-checked="true"]::after { transform: translateX(22px); background: #fff; }
+  input[type="range"] { width: min(200px, 45%); accent-color: var(--gold); }
+  .cta { min-height: 50px; padding: 0 28px; border-radius: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #2a1700;
+    background: linear-gradient(180deg, var(--gold-pale), var(--gold) 55%, #c8902e); box-shadow: 0 6px 18px rgba(242, 193, 78, .25), inset 0 1px 0 rgba(255, 255, 255, .6); }
+  .cta:hover { filter: brightness(1.06); }
+  .cta.wide { width: 100%; margin-top: 22px; }
+  .note { margin-top: 16px; font-size: 12px; color: var(--mist); }
+
+  /* paytable */
+  .pt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
+  .sym { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; background: #13224a; border: 1px solid rgba(201, 214, 240, .1); }
+  .sym.wide { grid-column: span 2; }
+  .sym img { width: 72px; height: auto; flex: none; }
+  .sym .nm { font-size: 12px; font-weight: 800; color: var(--moon); margin-bottom: 2px; }
+  .sym div div { font-size: 13px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+  .sym span { display: inline-block; width: 18px; font-weight: 800; color: var(--gold); }
+  .pt-lines { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 8px; }
+  .pt-lines figure { margin: 0; text-align: center; font-size: 11px; font-weight: 700; color: var(--mist); }
+  .pt-lines svg { width: 100%; height: auto; margin-bottom: 2px; }
+
+  /* history */
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .summary div { padding: 10px 12px; border-radius: 12px; background: #13224a; }
+  .summary b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .hist { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .hist th { padding: 6px 8px; text-align: left; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--mist); }
+  .hist td { padding: 8px; border-top: 1px solid var(--hair); }
+  .hist .num { text-align: right; }
+  .pos { color: var(--emerald-hi); font-weight: 800; }
+  .neg { color: #ff9aa8; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #2a1700; background: var(--gold); }
+  .empty { padding: 28px 8px; text-align: center; color: var(--mist); }
+
+  /* start screen */
+  #start { z-index: 20; background: radial-gradient(ellipse at 50% 38%, rgba(21, 38, 79, .86), rgba(3, 5, 14, .97)); text-align: center; }
+  #start h1 { margin: 0; font-family: var(--f-display); font-size: clamp(30px, 5.2cqw, 76px); line-height: 1.05;
+    background: linear-gradient(180deg, #fff3c0, var(--gold) 45%, #a8701f 70%, var(--gold-pale)); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .7)); }
+  #start .tagline { margin: 8px 0 28px; font-family: var(--f-title); font-size: clamp(11px, 1.3cqw, 18px); letter-spacing: .2em; color: #f2d48a; }
+  #start .cta { min-width: 200px; }
+  #start p { margin-top: 22px; font-size: clamp(11px, .95cqw, 14px); color: var(--mist); }
+  #loading { font-size: 14px; letter-spacing: .1em; color: var(--mist); }
+
+  /* reduced motion: OS setting or the in-game switch */
+  #shell.rm *, #shell.rm *::after { animation: none !important; transition: none !important; }
+  @media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
+
+  /* phone landscape: icon-only modes, mute lives in Settings */
+  @media (orientation: landscape) and (max-height: 520px) {
+    #btnMute { display: none; }
+    .mode { width: var(--b); padding: 0; justify-content: center; }
+    .mode span { display: none; }
+    #session { display: none; }
+  }
+
+  /* portrait: reels on top (canvas cropped to the reel frame), deck below */
+  @media (max-aspect-ratio: 4/5) {
+    #shell { width: 100vw; height: 100vh; height: 100dvh; aspect-ratio: auto; display: flex; flex-direction: column;
+      --b: clamp(44px, 12cqw, 58px); --spin: clamp(96px, 27cqw, 136px); --fs-l: clamp(10px, 2.8cqw, 13px); --fs-v: clamp(16px, 4.8cqw, 24px); }
+    #stagebox { position: relative; inset: auto; width: 100%; flex: 1; min-height: 0; }
+    #session { top: auto; bottom: 6px; left: 50%; transform: translateX(-50%); }
+    #deck { position: relative; flex: none; background: linear-gradient(180deg, rgba(7, 11, 26, 0), var(--night) 30%); row-gap: 14px; column-gap: 10px;
+      padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+      grid-template-columns: 1fr 1fr auto 1fr 1fr;
+      grid-template-areas: "bal bal . win win" "autoplay down spin up turbo" "menu bet bet bet mute"; }
+    .side, .tools, .plaque.bet { display: contents; }
+    #spin { grid-area: spin; } #balBox { grid-area: bal; } #winBox { grid-area: win; } #btnAuto { grid-area: autoplay; } #btnTurbo { grid-area: turbo; }
+    #betDown { grid-area: down; } #betUp { grid-area: up; } #betVal { grid-area: bet; } #btnMenu { grid-area: menu; } #btnMute { grid-area: mute; }
+    #balBox, #winBox { min-width: 0; }
+    #deck > *, .side > *, .tools > *, .plaque.bet > * { justify-self: center; }
+    #balBox, #winBox, #betVal { justify-self: stretch; }
+    #spin { margin-top: 0; }
+    .ib.sm { width: var(--b); height: var(--b); }
+    #betVal { height: var(--b); border: 1px solid var(--line); border-radius: calc(var(--b) * .28);
+      background: linear-gradient(180deg, rgba(21, 38, 79, .94), rgba(10, 18, 42, .94)); }
+    .mode { width: var(--b); padding: 0; justify-content: center; }
+    .mode span { display: none; }
+    .overlay { place-items: end center; padding: 0; }
+    .sheet, .sheet.narrow { width: 100%; max-height: 92%; border-radius: 18px 18px 0 0; }
+    .sheet .body { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .tab { padding: 0 12px; }
+  }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <div id="game">
-    <canvas id="stage" aria-label="Slot reels"></canvas>
-    <div id="hud">
-      <button id="btnInfo" class="icon" title="Paytable &amp; rules" aria-label="Paytable">i</button>
-      <div class="stat"><label>Balance</label><b id="balance">0.00</b><small>FUN</small></div>
-      <div class="stat"><label>Total bet</label>
-        <div class="betrow"><button class="sq" id="betDown" aria-label="Lower bet">&minus;</button><b id="bet">1.00</b><button class="sq" id="betUp" aria-label="Raise bet">+</button></div>
-      </div>
-      <button id="spin" aria-label="Spin (Space)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#04220f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>
-      </button>
-      <div class="stat"><label>Win</label><b id="win">0.00</b></div>
-      <div class="toggles">
-        <button class="tog" id="btnAuto" aria-pressed="false">AUTO</button>
-        <button class="tog" id="btnTurbo" aria-pressed="false">TURBO</button>
-        <button class="tog on" id="btnSound" aria-pressed="true">SOUND</button>
-        <button class="tog on" id="btnMusic" aria-pressed="true">MUSIC</button>
-      </div>
+  <div id="shell">
+    <div id="stagebox">
+      <canvas id="stage" aria-label="Slot reels. Tap to skip animations."></canvas>
+      <div id="session" aria-hidden="true"></div>
     </div>
 
+    <div id="deck">
+      <div class="side l">
+        <div class="tools">
+          <button class="ib" id="btnMenu" aria-label="Menu: paytable, history and settings" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+          </button>
+          <button class="ib" id="btnMute" aria-label="Mute sound" aria-pressed="false">
+            <svg class="i-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+            <svg class="i-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/></svg>
+          </button>
+        </div>
+        <div class="plaque" id="balBox"><span class="lbl">Balance</span><span><b id="balance">0.00</b><small>FUN</small></span></div>
+        <div class="plaque bet">
+          <button class="ib sm" id="betDown" aria-label="Lower bet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+          <button id="betVal" aria-label="Choose total bet" aria-haspopup="dialog"><span class="lbl">Total bet</span><b id="bet">1.00</b></button>
+          <button class="ib sm" id="betUp" aria-label="Raise bet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+      </div>
+
+      <button id="spin" aria-label="Spin">
+        <span class="bezel"></span><span class="stone"></span><span class="table"></span>
+        <svg class="i-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>
+        <svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+        <em id="autoLeft"></em>
+      </button>
+
+      <div class="side r">
+        <div class="plaque" id="winBox"><span class="lbl">Win</span><b id="win">0.00</b></div>
+        <button class="mode" id="btnAuto" aria-label="Autoplay" aria-haspopup="dialog" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+          <span id="autoLbl">Auto</span>
+        </button>
+        <button class="mode" id="btnTurbo" aria-label="Turbo spin" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+          <span>Turbo</span>
+        </button>
+      </div>
+    </div>
+    <div id="live" class="sr" aria-live="polite"></div>
+
     <div id="start" class="overlay">
-      <div class="card">
+      <div>
         <h1>Island of Gems</h1>
         <div class="tagline">LEGEND OF THE GOLDEN ELEPHANT</div>
         <div id="loading">Polishing the gems&hellip;</div>
-        <button id="btnStart" hidden>TAP TO PLAY</button>
-        <p>Prototype build &middot; play money only &middot; Space = spin / skip</p>
+        <button id="btnStart" class="cta" hidden>Play</button>
+        <p>Demo build &middot; play money only &middot; Space spins or skips</p>
       </div>
     </div>
 
-    <div id="paytable" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Paytable">
+    <div id="menu" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="menuTitle">
       <div class="sheet">
-        <button class="icon close" id="ptClose" aria-label="Close">&times;</button>
-        <h2>Paytable</h2>
-        <div id="ptBody"></div>
+        <header>
+          <h2 id="menuTitle" class="sr">Menu</h2>
+          <div class="tabs" role="tablist" aria-label="Menu sections">
+            <button class="tab" role="tab" id="tb-paytable" data-tab="paytable" aria-controls="tab-paytable">Paytable</button>
+            <button class="tab" role="tab" id="tb-history" data-tab="history" aria-controls="tab-history">History</button>
+            <button class="tab" role="tab" id="tb-settings" data-tab="settings" aria-controls="tab-settings">Settings</button>
+          </div>
+          <button class="ib close" data-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </header>
+        <div class="body">
+          <section id="tab-paytable" role="tabpanel" aria-labelledby="tb-paytable"></section>
+          <section id="tab-history" role="tabpanel" aria-labelledby="tb-history" hidden></section>
+          <section id="tab-settings" role="tabpanel" aria-labelledby="tb-settings" hidden></section>
+        </div>
+      </div>
+    </div>
+
+    <div id="autoSheet" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="autoTitle">
+      <div class="sheet narrow">
+        <header><h2 id="autoTitle">Autoplay</h2><button class="ib close" data-close aria-label="Close autoplay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+        <div class="body" id="autoBody"></div>
+      </div>
+    </div>
+
+    <div id="betSheet" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="betTitle">
+      <div class="sheet narrow">
+        <header><h2 id="betTitle">Total bet</h2><button class="ib close" data-close aria-label="Close bet picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+        <div class="body" id="betBody"></div>
       </div>
     </div>
   </div>
@@ -292,16 +475,16 @@ class StakeRGSProvider {
    100% procedural WebAudio placeholders. Production swaps these for mastered
    assets (same API) — see docs/BLUEPRINT.md §Audio.                           */
 class SoundEngine {
-  constructor() { this.ctx = null; this.sfxOn = true; this.musicOn = true; this.timer = null; }
+  constructor() { this.ctx = null; this.sfxOn = true; this.musicOn = true; this.vol = .8; this.timer = null; }
   init() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC || this.ctx) return;
     const ctx = this.ctx = new AC();
-    this.master = ctx.createGain(); this.master.gain.value = .85;
+    this.master = ctx.createGain(); this.master.gain.value = .85 * this.vol;
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = .004; comp.release.value = .2;
     this.master.connect(comp).connect(ctx.destination);
-    this.sfx = ctx.createGain(); this.sfx.gain.value = .9; this.sfx.connect(this.master);
-    this.music = ctx.createGain(); this.music.gain.value = .3; this.music.connect(this.master);
+    this.sfx = ctx.createGain(); this.sfx.gain.value = this.sfxOn ? .9 : 0; this.sfx.connect(this.master);
+    this.music = ctx.createGain(); this.music.gain.value = this.musicOn ? .3 : 0; this.music.connect(this.master);
     this.verb = ctx.createConvolver(); this.verb.buffer = this.impulse(2.6, 2.6);
     this.verbIn = ctx.createGain(); this.verbIn.gain.value = .5; this.verbIn.connect(this.verb).connect(this.master);
     const len = ctx.sampleRate * 2; this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -316,6 +499,7 @@ class SoundEngine {
   resume() { if (this.ctx && this.ctx.state !== 'running') this.ctx.resume(); }
   setSfx(on) { this.sfxOn = on; if (this.ctx) this.sfx.gain.setTargetAtTime(on ? .9 : 0, this.t, .03); }
   setMusic(on) { this.musicOn = on; if (this.ctx) this.music.gain.setTargetAtTime(on ? .3 : 0, this.t, .1); }
+  setVolume(v) { this.vol = v; if (this.ctx) this.master.gain.setTargetAtTime(.85 * v, this.t, .05); }
 
   osc({ type = 'sine', f, f2, t, dur, gain = .2, attack = .004, out, verb = 0, detune = 0 }) {
     const ctx = this.ctx; t = t ?? this.t;
@@ -795,11 +979,17 @@ class View {
     this.win = null; this.mode = 'base'; this.fsHud = null;
     this.t = 0; this.last = performance.now();
     this.buildStatic();
-    this.resize(); addEventListener('resize', () => this.resize());
+    this.reduced = false;
+    this.resize(); new ResizeObserver(() => this.resize()).observe(this.cv);
   }
+  // Camera: landscape shows the full 1280x720 stage. Portrait fits the reel frame (x 200..1080) to the width
+  // and sits the stage on the deck; any extra height shows open sky above it.
   resize() {
     const r = this.cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
-    this.cv.width = Math.round(r.width * dpr); this.cv.height = Math.round(r.height * dpr); this.k = this.cv.width / W;
+    if (!r.width || !r.height) return;
+    this.cv.width = Math.round(r.width * dpr); this.cv.height = Math.round(r.height * dpr);
+    this.k = Math.max(Math.min(this.cv.width / 880, this.cv.height / H), this.cv.width / W);
+    this.ox = (W - this.cv.width / this.k) / 2; this.oy = H - this.cv.height / this.k; this.vw = W - 2 * this.ox;
   }
   buildStatic() {
     this.bg = { base: this.paintBackground('base'), free: this.paintBackground('free') };
@@ -818,7 +1008,7 @@ class View {
       gx.fillStyle = rg; gx.fillRect(0, 0, 64, 64); this.glows[k] = gc;
     }
     const rnd = seeded(7);
-    this.stars = Array.from({ length: 150 }, () => ({ x: rnd() * W, y: rnd() * H * .55, r: rnd() * 1.3 + .3, p: rnd() * TAU }));
+    this.stars = Array.from({ length: 330 }, () => ({ x: rnd() * W, y: rnd() * (H * .55 + 500) - 500, r: rnd() * 1.3 + .3, p: rnd() * TAU }));
   }
   paintBackground(mode) {
     const [cv, c] = mkCanvas(W * 2, H * 2); c.scale(2, 2);
@@ -929,6 +1119,7 @@ class View {
     for (let i = 0; i < n; i++) { const a = rand(0, TAU), s = rand(80, 340); this.emit({ type: 'spark', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 220, life: rand(.4, .9), max: .9, size: rand(10, 22), glow: kind }); }
   }
   coinShower(n) {
+    if (this.reduced) return;
     for (let i = 0; i < n; i++) this.emit({ type: 'coin', x: W / 2 + rand(-80, 80), y: 640, vx: rand(-380, 380), vy: rand(-900, -520), g: 900, life: 2.6, max: 2.6, size: rand(18, 30), spin: rand(4, 12), ph: rand(0, TAU) });
   }
   cellCenter(r, row) { return [RX + r * SW + SW / 2, RY + row * SH + SH / 2]; }
@@ -954,9 +1145,9 @@ class View {
       const tw = this.tweens[i]; tw.t += dt; const u = Math.min(1, tw.t / tw.dur); tw.fn(tw.ease(u));
       if (u >= 1) { this.tweens.splice(i, 1); tw.res(); }
     }
-    if (this.mode === 'base' && Math.random() < dt * 6) this.emit({ type: 'firefly', x: rand(0, W), y: rand(380, 700), vx: rand(-12, 12), vy: rand(-14, 4), g: 0, life: rand(3, 6), max: 6, size: rand(8, 16), glow: 'green', ph: rand(0, TAU) });
-    if (this.mode === 'free') for (const tx of [176, 1104]) if (Math.random() < dt * 40) this.emit({ type: 'ember', x: tx + rand(-8, 8), y: 470, vx: rand(-20, 20), vy: rand(-140, -60), g: -10, life: rand(.8, 1.8), max: 1.8, size: rand(6, 14), glow: 'ember', ph: rand(0, TAU) });
-    if (this.overlay && this.overlay.type === 'big' && Math.random() < dt * 22) { this.coinShower(1); if (Math.random() < .3) audio.coin(); }
+    if (!this.reduced && this.mode === 'base' && Math.random() < dt * 6) this.emit({ type: 'firefly', x: rand(0, W), y: rand(380, 700), vx: rand(-12, 12), vy: rand(-14, 4), g: 0, life: rand(3, 6), max: 6, size: rand(8, 16), glow: 'green', ph: rand(0, TAU) });
+    if (!this.reduced && this.mode === 'free') for (const tx of [176, 1104]) if (Math.random() < dt * 40) this.emit({ type: 'ember', x: tx + rand(-8, 8), y: 470, vx: rand(-20, 20), vy: rand(-140, -60), g: -10, life: rand(.8, 1.8), max: 1.8, size: rand(6, 14), glow: 'ember', ph: rand(0, TAU) });
+    if (!this.reduced && this.overlay && this.overlay.type === 'big' && Math.random() < dt * 22) { this.coinShower(1); if (Math.random() < .3) audio.coin(); }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]; p.life -= dt;
       if (p.life <= 0 || p.y > H + 60) { this.particles.splice(i, 1); continue; }
@@ -968,11 +1159,13 @@ class View {
 
   draw() {
     const c = this.ctx, t = this.t;
-    c.setTransform(this.k, 0, 0, this.k, 0, 0);
+    c.setTransform(this.k, 0, 0, this.k, -this.ox * this.k, -this.oy * this.k);
+    if (this.oy < 0) { c.fillStyle = this.mode === 'free' ? '#12040a' : '#060a1e'; c.fillRect(this.ox, this.oy, this.vw, -this.oy + 1); } // tall portrait: open sky above the stage
     c.drawImage(this.bg[this.mode], 0, 0, W, H);
+    if (this.oy < 0) { const f = c.createLinearGradient(0, H - 70, 0, H); f.addColorStop(0, 'rgba(7,11,26,0)'); f.addColorStop(1, '#070b1a'); c.fillStyle = f; c.fillRect(this.ox, H - 70, this.vw, 70); }
     // twinkling stars
     c.fillStyle = '#fff';
-    for (const s of this.stars) { c.globalAlpha = .35 + .35 * Math.sin(t * 2 + s.p); c.fillRect(s.x, s.y, s.r, s.r); }
+    for (const s of this.stars) { c.globalAlpha = this.reduced ? .5 : .35 + .35 * Math.sin(t * 2 + s.p); c.fillRect(s.x, s.y, s.r, s.r); }
     c.globalAlpha = 1;
     if (this.mode === 'free') { this.drawTorch(c, 176, 470, t); this.drawTorch(c, 1104, 470, t + 1.7); }
     this.drawParticles(c, ['firefly', 'ember']);
@@ -1017,6 +1210,7 @@ class View {
       return;
     }
     const tw = 900, th = 110, x = (W - tw) / 2, y = 20;
+    if (this.reduced) { c.drawImage(this.title, x, y, tw, th); return; }
     const [sc, s] = this.shimmerCanvas || (this.shimmerCanvas = mkCanvas(tw * 2, th * 2));
     s.globalCompositeOperation = 'source-over'; s.clearRect(0, 0, sc.width, sc.height); s.drawImage(this.title, 0, 0);
     s.globalCompositeOperation = 'source-atop';
@@ -1057,7 +1251,7 @@ class View {
         const a = .55 + .35 * Math.sin(t * 14);
         c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,190,60,${a})`; c.lineWidth = 6; c.shadowColor = '#ffb020'; c.shadowBlur = 26;
         c.strokeRect(x + 3, RY + 3, SW - 6, SH * NROW - 6); c.restore();
-        if (Math.random() < .5) this.emit({ type: 'spark', x: x + rand(0, SW), y: RY + SH * NROW, vx: rand(-20, 20), vy: rand(-320, -160), g: 0, life: .9, max: .9, size: rand(8, 16), glow: 'gold' });
+        if (!this.reduced && Math.random() < .5) this.emit({ type: 'spark', x: x + rand(0, SW), y: RY + SH * NROW, vx: rand(-20, 20), vy: rand(-320, -160), g: 0, life: .9, max: .9, size: rand(8, 16), glow: 'gold' });
       }
     }
     if (!win) return;
@@ -1121,7 +1315,7 @@ class View {
     }
   }
   rays(c, x, y, t, alpha, col = '255,210,110') {
-    c.save(); c.translate(x, y); c.rotate(t * .25); c.globalCompositeOperation = 'lighter';
+    c.save(); c.translate(x, y); c.rotate(this.reduced ? 0 : t * .25); c.globalCompositeOperation = 'lighter';
     for (let i = 0; i < 18; i++) {
       c.rotate(TAU / 18);
       const g = c.createLinearGradient(0, 0, 0, -700); g.addColorStop(0, `rgba(${col},${.35 * alpha})`); g.addColorStop(1, `rgba(${col},0)`);
@@ -1130,8 +1324,10 @@ class View {
     c.restore();
   }
   bigText(c, text, x, y, size, fill, s = 1, font = FONT_N) {
-    c.save(); c.translate(x, y); c.scale(s, s);
-    c.font = `900 ${size}px ${font}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    c.save(); c.font = `900 ${size}px ${font}`;
+    const fit = Math.min(1, (this.vw - 60) / (c.measureText(text).width + size * .2)); // shrink to the visible width (portrait crop)
+    c.translate(x, y); c.scale(s * fit, s * fit);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
     c.lineWidth = size * .2; c.strokeStyle = '#1a0800'; c.strokeText(text, 0, 0);
     c.fillStyle = fill || goldGrad(c, 0, -size / 2, 0, size / 2); c.fillText(text, 0, 0); c.restore();
   }
@@ -1140,7 +1336,7 @@ class View {
     const fade = o.t1 ? 1 - clamp((t - o.t1) / .35, 0, 1) : clamp(el / .3, 0, 1);
     if (o.t1 && fade <= 0) { this.overlay = null; return; }
     c.save(); c.globalAlpha = fade;
-    c.fillStyle = 'rgba(4,2,12,.72)'; c.fillRect(0, 0, W, H);
+    c.fillStyle = 'rgba(4,2,12,.72)'; c.fillRect(this.ox, this.oy, this.vw, H - this.oy);
     if (o.type === 'big') {
       this.rays(c, W / 2, 330, t, 1);
       const tier = BIG_WIN_TIERS[o.tier];
@@ -1177,6 +1373,8 @@ class Game {
   constructor(view, provider) {
     this.view = view; this.provider = provider; this.engine = new MathEngine(CFG);
     this.betIdx = 2; this.balance = 0; this.busy = false; this.auto = false; this.turbo = false;
+    this.autoCfg = null; this.autoLeft = 0; this.autoStartBal = 0;
+    this.history = []; this.stats = { rounds: 0, bet: 0, won: 0 }; this.sessionStart = Date.now();
     this.skipping = false; this.waiters = new Set();
     view.reels.forEach(r => r.setStrip(CFG.strips.base[r.i], SecureRng.int(CFG.strips.base[r.i].length)));
   }
@@ -1188,11 +1386,16 @@ class Game {
     return new Promise(res => { const w = { res }; w.id = setTimeout(() => { this.waiters.delete(w); res(); }, s * 1000); this.waiters.add(w); });
   }
   skip() { this.skipping = true; for (const w of this.waiters) { clearTimeout(w.id); w.res(); } this.waiters.clear(); this.view.finishTweens(); }
-  press() { audio.resume(); if (this.busy) this.skip(); else this.spin(); }
+  press() {
+    audio.resume();
+    if (this.auto) { this.stopAuto('AUTOPLAY STOPPED'); if (this.busy) this.skip(); return; }
+    if (this.busy) this.skip(); else this.spin();
+  }
 
   async spin() {
     if (this.busy) return;
-    if (this.bet > this.balance + 1e-9) { this.view.toast('INSUFFICIENT BALANCE', { size: 34, color: '#ff8a8a' }); this.setAuto(false); return; }
+    if (this.bet > this.balance + 1e-9) { this.view.toast('INSUFFICIENT BALANCE', { size: 34, color: '#ff8a8a' }); this.stopAuto(); return; }
+    if (this.auto) this.autoLeft--;
     this.busy = true; ui.update();
     const bet = this.bet;
     this.view.clearWins(); ui.setWin(0);
@@ -1204,10 +1407,39 @@ class Game {
     catch (e) { console.error('presentation error', e); }
     const end = await this.provider.endRound(bet, res.round);
     this.balance = end.balance;
-    this.busy = false; ui.update();
+    this.record(res.round, bet);
+    this.busy = false;
+    if (this.auto) this.checkAutoLimits(res.round.payoutMultiplier / 100 * bet);
+    ui.update();
     if (this.auto) { await new Promise(r => setTimeout(r, this.turbo ? 150 : 450)); if (this.auto && !this.busy) this.spin(); }
   }
-  setAuto(on) { this.auto = on; ui.update(); if (on && !this.busy) this.spin(); }
+  // History and session totals are read from the finished book; the client never alters outcomes.
+  record(round, bet) {
+    const win = round.payoutMultiplier / 100 * bet;
+    const fs = round.events.filter(e => e.type === 'reveal' && e.gameType === 'freegame').length;
+    this.history.unshift({ time: new Date(), bet, win, x: round.payoutMultiplier / 100, fs });
+    if (this.history.length > 50) this.history.pop();
+    this.stats.rounds++; this.stats.bet += bet; this.stats.won += win;
+    ui.roundDone(win);
+  }
+  startAuto(cfg) {
+    if (this.busy) return;
+    this.autoCfg = cfg; this.autoLeft = cfg.count; this.autoStartBal = this.balance; this.auto = true;
+    ui.update(); this.spin();
+  }
+  stopAuto(reason) {
+    if (!this.auto) return;
+    this.auto = false; ui.update();
+    if (reason) this.view.toast(reason, { size: 30, color: '#ffe7a3', y: 650, dur: 2.2 });
+  }
+  // Responsible-gambling limits: spin count, loss limit (checked before the next bet is placed) and single-win limit.
+  checkAutoLimits(won) {
+    const c = this.autoCfg;
+    if (this.autoLeft <= 0) this.stopAuto('AUTOPLAY COMPLETE');
+    else if (this.autoStartBal - this.balance + this.bet > c.loss + 1e-9) this.stopAuto('LOSS LIMIT REACHED');
+    else if (c.single && won >= c.single - 1e-9) this.stopAuto('WIN LIMIT REACHED');
+    else if (this.bet > this.balance + 1e-9) this.stopAuto('INSUFFICIENT BALANCE');
+  }
 
   async playBook(events, bet) {
     let shown = 0, fsTotal = 0, fsSpins = 0, inFs = false;
@@ -1228,6 +1460,7 @@ class Game {
           break;
         }
         case 'freeSpinTrigger':
+          if (this.auto && this.autoCfg.feature) this.stopAuto('AUTOPLAY STOPPED');
           await this.freeSpinIntro(ev);
           inFs = true; fsSpins = ev.totalFs;
           break;
@@ -1242,6 +1475,7 @@ class Game {
         case 'finalWin':
           if (inFs) await this.freeSpinOutro(ev.amount * bet, this.view.fsHud.spin);
           ui.setWin(ev.amount * bet);
+          if (ev.amount > 0) ui.announce(`You won ${fmt(ev.amount * bet)} FUN`);
           break;
       }
     }
@@ -1297,7 +1531,7 @@ class Game {
     if (inFs && ev.multiplier > 1) { v.toast(`x${ev.multiplier}`, { size: 110, dur: 1.1, y: 330 }); audio.multUp(); await this.sleep(.6); this.skipping = false; }
     if (x >= BIG_WIN_TIERS[0].at) { await this.bigWin(before, amt, x, bet); return; }
     audio.win(x < 1 ? 0 : x < 5 ? 1 : 2);
-    const dur = clamp(.5 + x * .22, .5, 2.4) * (this.turbo ? .5 : 1);
+    const dur = clamp(.5 + x * .22, .5, 2.4) * (this.turbo ? .5 : 1) * (v.reduced ? .4 : 1);
     await this.countUp(before, before + amt, dur);
     await this.sleep(inFs ? .7 : .2);
   }
@@ -1314,7 +1548,7 @@ class Game {
     const tierFor = val => { let k = 0; BIG_WIN_TIERS.forEach((tr, i) => { if (val / bet >= tr.at) k = i; }); return k; };
     v.overlay = { type: 'big', t0: v.t, tier: 0, tierT: v.t, value: 0 };
     v.coinShower(40); audio.bigWin();
-    const dur = 3 + tierFor(amt) * 2.2;
+    const dur = (3 + tierFor(amt) * 2.2) * (v.reduced ? .5 : 1);
     let lastTick = 0;
     await v.tween(dur, u => {
       const val = amt * u; v.overlay.value = val; ui.setWin(before + val);
@@ -1369,75 +1603,226 @@ class Game {
 const $ = id => document.getElementById(id);
 const audio = new SoundEngine();
 let game, view;
+
+// Player preferences: per-device convenience only, so localStorage is fine (and optional).
+const prefs = Object.assign({ sfx: true, music: true, vol: .8, muted: false, turbo: false, space: true,
+  reduced: matchMedia('(prefers-reduced-motion: reduce)').matches }, (() => { try { return JSON.parse(localStorage.getItem('iog.prefs')) || {}; } catch (e) { return {}; } })());
+function savePrefs() { try { localStorage.setItem('iog.prefs', JSON.stringify(prefs)); } catch (e) { /* storage blocked */ } }
+function applyPrefs() {
+  audio.setSfx(prefs.sfx); audio.setMusic(prefs.music); audio.setVolume(prefs.muted ? 0 : prefs.vol);
+  game.turbo = prefs.turbo; view.reduced = prefs.reduced; $('shell').classList.toggle('rm', prefs.reduced);
+  ui.update();
+}
+
 const ui = {
   update() {
     if (!game) return;
     $('balance').textContent = fmt(game.balance);
     $('bet').textContent = fmt(game.bet);
-    $('betDown').disabled = game.busy || game.betIdx === 0;
-    $('betUp').disabled = game.busy || game.betIdx === BETS.length - 1;
-    $('spin').classList.toggle('busy', game.busy);
-    $('spin').classList.toggle('stop', game.busy);
-    $('btnAuto').classList.toggle('on', game.auto); $('btnAuto').setAttribute('aria-pressed', game.auto);
-    $('btnTurbo').classList.toggle('on', game.turbo); $('btnTurbo').setAttribute('aria-pressed', game.turbo);
+    const lock = game.busy || game.auto;
+    $('betDown').disabled = lock || game.betIdx === 0;
+    $('betUp').disabled = lock || game.betIdx === BETS.length - 1;
+    $('betVal').disabled = lock;
+    const sp = $('spin');
+    sp.classList.toggle('stop', game.busy && !game.auto); sp.classList.toggle('auto', game.auto);
+    sp.setAttribute('aria-label', game.auto ? `Stop autoplay, ${game.autoLeft} spins left` : game.busy ? 'Skip animation' : 'Spin');
+    $('autoLeft').textContent = game.auto ? game.autoLeft : '';
+    $('autoLbl').textContent = game.auto ? `Stop ${game.autoLeft}` : 'Auto';
+    $('btnAuto').setAttribute('aria-pressed', game.auto); $('btnAuto').setAttribute('aria-label', game.auto ? 'Stop autoplay' : 'Autoplay');
+    $('btnTurbo').setAttribute('aria-pressed', game.turbo);
+    $('btnMute').setAttribute('aria-pressed', prefs.muted); $('btnMute').setAttribute('aria-label', prefs.muted ? 'Unmute sound' : 'Mute sound');
   },
   setWin(v) { $('win').textContent = fmt(v); },
-  flash(on) { $('win').classList.toggle('flash', on); },
+  flash(on) { $('winBox').classList.toggle('flash', on); },
+  announce(text) { $('live').textContent = ''; setTimeout(() => { $('live').textContent = text; }, 30); },
+  roundDone() { if (!$('menu').hidden && menuTab === 'history') renderHistory(); },
 };
 
-function buildPaytable() {
-  const n = CFG.paylines.length;
-  const bet = game.bet;
-  const order = ['W', 'H1', 'H2', 'H3', 'H4', 'H5', 'L1', 'L2', 'L3', 'L4'];
-  const cards = order.map(s => {
-    const p = CFG.linePays[s];
-    const rows = [5, 4, 3].map(k => `<div><span>${k}</span>${fmt(p[k] / n * bet)}</div>`).join('');
-    return `<div class="sym"><img alt="" src="${view.art.tex[s].toDataURL()}"><div><div class="nm">${CFG.symbols[s].name}</div>${rows}</div></div>`;
-  }).join('');
-  const sc = [5, 4, 3].map(k => `<div><span>${k}</span>${fmt(CFG.scatterPays[k] * bet)} + ${CFG.freeSpins.award[k]} FS</div>`).join('');
-  const lines = CFG.paylines.map((l, i) => `<svg viewBox="0 0 50 34"><rect x="0" y="0" width="50" height="34" rx="3" fill="#13222f"/>${
-    l.map((row, r) => `<rect x="${r * 10 + 1}" y="${row * 11 + 1}" width="8" height="9" rx="1.5" fill="hsl(${(i * 47) % 360},90%,60%)"/>`).join('')}<text x="25" y="33" font-size="0" fill="none">${i + 1}</text></svg>`);
-  $('ptBody').innerHTML = `
-    <div class="grid">${cards}<div class="sym"><img alt="" src="${view.art.tex.S.toDataURL()}"><div><div class="nm">${CFG.symbols.S.name} (scatter)</div>${sc}</div></div></div>
+/* ---- modal sheets: one stack, Escape and backdrop close, Tab stays inside, focus returns to the opener */
+const FOCUSABLE = 'button:not(:disabled), input, [href], [tabindex]:not([tabindex="-1"])';
+const modal = {
+  stack: [],
+  open(id, opener) {
+    const el = $(id); el.hidden = false;
+    this.stack.push({ el, opener: opener || document.activeElement });
+    const f = el.querySelector('[data-autofocus]') || el.querySelector(FOCUSABLE); f && f.focus();
+  },
+  close() {
+    const top = this.stack.pop(); if (!top) return;
+    top.el.hidden = true; if (top.opener && top.opener.focus) top.opener.focus();
+  },
+  trap(e) {
+    const top = this.stack[this.stack.length - 1]; if (!top) return;
+    const f = [...top.el.querySelectorAll(FOCUSABLE)].filter(x => x.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  },
+};
+
+/* ---- menu: Paytable | History | Settings */
+let menuTab = 'paytable';
+function openMenu(tab, opener) { selectTab(tab); modal.open('menu', opener); $('tb-' + tab).focus(); }
+function selectTab(tab) {
+  menuTab = tab;
+  for (const name of ['paytable', 'history', 'settings']) {
+    const on = name === tab;
+    $('tb-' + name).setAttribute('aria-selected', on); $('tb-' + name).tabIndex = on ? 0 : -1; $('tab-' + name).hidden = !on;
+  }
+  ({ paytable: renderPaytable, history: renderHistory, settings: renderSettings })[tab]();
+  $('tab-' + tab).parentElement.scrollTop = 0;
+}
+
+let symbolArt = null;
+function renderPaytable() {
+  const n = CFG.paylines.length, bet = game.bet;
+  symbolArt = symbolArt || Object.fromEntries(Object.keys(SYMBOL_PAINTERS).map(s => [s, view.art.tex[s].toDataURL()]));
+  const card = (s, name, rows, cls = '') => `<div class="sym ${cls}"><img alt="" src="${symbolArt[s]}"><div><div class="nm">${name}</div>${rows}</div></div>`;
+  const cards = ['W', 'H1', 'H2', 'H3', 'H4', 'H5', 'L1', 'L2', 'L3', 'L4'].map(s =>
+    card(s, CFG.symbols[s].name, [5, 4, 3].map(k => `<div><span>${k}</span>${fmt(CFG.linePays[s][k] / n * bet)}</div>`).join(''))).join('');
+  const sc = card('S', `${CFG.symbols.S.name} (scatter)`, [5, 4, 3].map(k => `<div><span>${k}</span>${fmt(CFG.scatterPays[k] * bet)} + ${CFG.freeSpins.award[k]} free spins</div>`).join(''), 'wide');
+  const lines = CFG.paylines.map((l, i) => `<figure><svg viewBox="0 0 50 34" aria-hidden="true"><rect width="50" height="34" rx="4" fill="#0a1230"/>${
+    l.map((row, r) => `<rect x="${r * 10 + 1}" y="${row * 11 + 1}" width="8" height="9" rx="1.5" fill="hsl(${(i * 47) % 360},90%,60%)"/>`).join('')}</svg>Line ${i + 1}</figure>`).join('');
+  $('tab-paytable').innerHTML = `
+    <h3>Symbols <small style="color:var(--mist);font-family:var(--f-ui);font-size:12px;letter-spacing:0">pays for a total bet of ${fmt(bet)} FUN</small></h3>
+    <div class="pt-grid">${cards}${sc}</div>
     <h3>Features</h3>
     <ul>
-      <li><b>Golden Elephant</b> is WILD: substitutes for every symbol except the Lion Rock scatter, and pays on its own.</li>
+      <li><b>Golden Elephant</b> is wild. It substitutes for every symbol except the Lion Rock scatter, and pays on its own.</li>
       <li>3, 4 or 5 <b>Lion Rock</b> scatters anywhere pay and award ${CFG.freeSpins.award[3]}, ${CFG.freeSpins.award[4]} or ${CFG.freeSpins.award[5]} <b>Gem Rush Free Spins</b>.</li>
-      <li>In free spins every win is multiplied by the <b>Gem Multiplier</b>. It starts at x${CFG.freeSpins.multiplierStart} and grows by +${CFG.freeSpins.multiplierStep} after every winning spin (max x${CFG.freeSpins.multiplierMax}). Free spins can retrigger.</li>
-      <li>Maximum win is <b>${CFG.maxWinMultiplier.toLocaleString()}x</b> the total bet; the round ends when it is reached.</li>
+      <li>In free spins every win is multiplied by the <b>Gem Multiplier</b>. It starts at x${CFG.freeSpins.multiplierStart} and grows by ${CFG.freeSpins.multiplierStep} after every winning spin, up to x${CFG.freeSpins.multiplierMax}. Free spins can retrigger.</li>
+      <li>The maximum win is <b>${CFG.maxWinMultiplier.toLocaleString('en-US')}x</b> the total bet. The round ends when it is reached.</li>
     </ul>
     <h3>Paylines (${n})</h3>
-    <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:.6cqw">${lines.join('')}</div>
+    <div class="pt-lines">${lines}</div>
     <h3>Rules</h3>
-    <p>Wins pay left to right on adjacent reels starting from the leftmost reel. Only the highest win per line is paid. Line wins are shown for the current total bet.
-    Theoretical RTP: 96.10% (prototype math, simulated). Malfunction voids all pays and plays.</p>`;
+    <p>Wins pay left to right on adjacent reels, starting from the leftmost reel. Only the highest win per line is paid. Line wins are shown for the current total bet.
+    Theoretical RTP: 96.10% (prototype math, simulated). A malfunction voids all pays and plays.</p>`;
+}
+
+const clock = d => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const signed = v => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmt(Math.abs(v))}`;
+function renderHistory() {
+  const s = game.stats, net = s.won - s.bet;
+  const rows = game.history.map(r => `<tr><td>${clock(r.time)}</td><td class="num">${fmt(r.bet)}</td>
+    <td class="num ${r.win > 0 ? 'pos' : ''}">${fmt(r.win)}</td>
+    <td>${r.fs ? `<span class="tag">Gem Rush · ${r.fs} spins</span> ` : ''}${r.win > 0 ? `${r.x.toFixed(2)}x` : 'No win'}</td></tr>`).join('');
+  $('tab-history').innerHTML = `
+    <div class="summary">
+      <div><span class="lbl">Rounds</span><b>${s.rounds}</b></div>
+      <div><span class="lbl">Total bet</span><b>${fmt(s.bet)}</b></div>
+      <div><span class="lbl">Total won</span><b>${fmt(s.won)}</b></div>
+      <div><span class="lbl">Net</span><b class="${net > 0 ? 'pos' : net < 0 ? 'neg' : ''}">${signed(net)}</b></div>
+    </div>
+    ${rows ? `<table class="hist"><thead><tr><th>Time</th><th class="num">Bet</th><th class="num">Win</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="note">Shows your last 50 rounds this session. Amounts are in FUN.</p>`
+      : '<div class="empty">No rounds yet. Your spins this session will appear here.</div>'}`;
+}
+
+const SETTINGS = [
+  ['sfx', 'Sound effects', 'Reel stops, wins and gem chimes'],
+  ['music', 'Music', 'Hand drums and reed horn'],
+  ['turbo', 'Turbo spin', 'Faster reels and shorter win counts'],
+  ['space', 'Spin with the space bar', 'Space also skips animations'],
+  ['reduced', 'Reduced motion', 'Turns off fireflies, embers, coin showers and the title shimmer, and shortens win counts'],
+];
+function renderSettings() {
+  $('tab-settings').innerHTML = `
+    <div class="row"><span><label for="vol">Volume</label><span class="hint">Master level for effects and music</span></span>
+      <input type="range" id="vol" min="0" max="1" step=".05" value="${prefs.muted ? 0 : prefs.vol}"></div>
+    ${SETTINGS.map(([k, name, hint]) => `<div class="row"><span id="lb-${k}">${name}<span class="hint">${hint}</span></span>
+      <button class="switch" role="switch" data-pref="${k}" aria-checked="${prefs[k]}" aria-labelledby="lb-${k}"></button></div>`).join('')}
+    <p class="note">Demo mode. Play money (FUN) only, with no cash value. Session started at ${clock(new Date(game.sessionStart))}.</p>`;
+}
+
+/* ---- autoplay with limits (required before autoplay can start) */
+const AUTO = { count: [10, 25, 50, 100, 250], loss: [10, 25, 50, 100], single: [0, 20, 50, 100] };
+const autoSel = { count: 25, loss: 50, single: 0, feature: true };
+function renderAuto() {
+  const b = game.bet;
+  const chips = (key, label) => AUTO[key].map(v => `<button class="chip" data-k="${key}" data-v="${v}" aria-pressed="${autoSel[key] === v}">${label(v)}</button>`).join('');
+  $('autoBody').innerHTML = `
+    <div class="field"><div class="flabel" id="al-count">Number of spins</div><div class="chips" role="group" aria-labelledby="al-count">${chips('count', v => v)}</div></div>
+    <div class="field"><div class="flabel" id="al-loss">Stop if balance drops by</div><div class="chips" role="group" aria-labelledby="al-loss">${chips('loss', v => fmt(v * b))}</div></div>
+    <div class="field"><div class="flabel" id="al-single">Stop if a single win reaches</div><div class="chips" role="group" aria-labelledby="al-single">${chips('single', v => v ? fmt(v * b) : 'Off')}</div></div>
+    <div class="row"><span id="al-feature">Stop when Gem Rush Free Spins start</span><button class="switch" role="switch" data-k="feature" aria-checked="${autoSel.feature}" aria-labelledby="al-feature"></button></div>
+    <button class="cta wide" id="autoGo" data-autofocus>Start ${autoSel.count} spins</button>
+    <p class="note">Total bet ${fmt(b)} FUN per spin. Tap the spin gem or press Space at any time to stop.</p>`;
+}
+
+function renderBets() {
+  $('betBody').innerHTML = `<div class="chips" role="group" aria-label="Total bet">${BETS.map((v, i) =>
+    `<button class="chip" data-i="${i}" aria-pressed="${i === game.betIdx}" ${i === game.betIdx ? 'data-autofocus' : ''}>${fmt(v)}</button>`).join('')}</div>
+    <p class="note">Amounts are in FUN. Line pays in the paytable update with the bet.</p>`;
+}
+
+function tickSession() {
+  if (!game) return;
+  const m = Math.floor((Date.now() - game.sessionStart) / 1000), net = game.stats.won - game.stats.bet;
+  $('session').innerHTML = `${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}<i>·</i>Session ${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}<i>·</i>Net ${signed(net)}`;
 }
 
 async function boot() {
-  try { await Promise.race([Promise.all([document.fonts.load(`900 40px "Cinzel"`), document.fonts.load(`900 40px "Cinzel Decorative"`)]), new Promise(r => setTimeout(r, 2500))]); } catch (e) { /* offline: fall back to system fonts */ }
+  try { await Promise.race([Promise.all([document.fonts.load(`900 40px "Cinzel"`), document.fonts.load(`900 40px "Cinzel Decorative"`), document.fonts.load(`800 16px "Manrope"`)]), new Promise(r => setTimeout(r, 2500))]); } catch (e) { /* offline: fall back to system fonts */ }
   const art = buildTextures();
   view = new View($('stage'), art);
   game = new Game(view, new LocalDemoProvider(new MathEngine(CFG)));
   await game.init();
+  applyPrefs();
   view.startLoop();
+  tickSession(); setInterval(tickSession, 1000);
   $('loading').hidden = true; $('btnStart').hidden = false; $('btnStart').focus();
 
-  $('btnStart').onclick = () => { audio.init(); audio.resume(); audio.startMusic('base'); $('start').classList.add('hidden'); };
-  $('spin').onclick = () => { audio.click(); game.press(); };
+  const click = () => audio.click();
+  $('btnStart').onclick = () => { audio.init(); audio.resume(); audio.startMusic('base'); $('start').hidden = true; $('spin').focus(); };
+  $('spin').onclick = () => { click(); game.press(); };
   $('stage').addEventListener('pointerdown', () => { if (game.busy) game.skip(); });
-  $('betUp').onclick = () => { if (!game.busy && game.betIdx < BETS.length - 1) { game.betIdx++; audio.click(); ui.update(); } };
-  $('betDown').onclick = () => { if (!game.busy && game.betIdx > 0) { game.betIdx--; audio.click(); ui.update(); } };
-  $('btnAuto').onclick = () => { audio.click(); game.setAuto(!game.auto); };
-  $('btnTurbo').onclick = () => { audio.click(); game.turbo = !game.turbo; ui.update(); };
-  $('btnSound').onclick = e => { audio.setSfx(!audio.sfxOn); e.currentTarget.classList.toggle('on', audio.sfxOn); e.currentTarget.setAttribute('aria-pressed', audio.sfxOn); };
-  $('btnMusic').onclick = e => { audio.setMusic(!audio.musicOn); e.currentTarget.classList.toggle('on', audio.musicOn); e.currentTarget.setAttribute('aria-pressed', audio.musicOn); };
-  $('btnInfo').onclick = () => { buildPaytable(); $('paytable').classList.remove('hidden'); };
-  $('ptClose').onclick = () => $('paytable').classList.add('hidden');
-  $('paytable').addEventListener('click', e => { if (e.target.id === 'paytable') $('paytable').classList.add('hidden'); });
-  addEventListener('keydown', e => {
-    if (e.code === 'Space' && $('start').classList.contains('hidden') && $('paytable').classList.contains('hidden')) { e.preventDefault(); game.press(); }
-    if (e.code === 'Escape') $('paytable').classList.add('hidden');
+  const stepBet = d => { if (!game.busy && !game.auto) { game.betIdx = clamp(game.betIdx + d, 0, BETS.length - 1); click(); ui.update(); } };
+  $('betUp').onclick = () => stepBet(1);
+  $('betDown').onclick = () => stepBet(-1);
+  $('betVal').onclick = e => { click(); renderBets(); modal.open('betSheet', e.currentTarget); };
+  $('betBody').onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; game.betIdx = +b.dataset.i; click(); ui.update(); modal.close(); };
+  $('btnAuto').onclick = e => { click(); if (game.auto) game.stopAuto('AUTOPLAY STOPPED'); else { renderAuto(); modal.open('autoSheet', e.currentTarget); } };
+  $('autoBody').onclick = e => {
+    const chip = e.target.closest('[data-k]'); if (!chip) return;
+    click();
+    const k = chip.dataset.k;
+    autoSel[k] = k === 'feature' ? !autoSel.feature : +chip.dataset.v;
+    renderAuto(); $('autoBody').querySelector(k === 'feature' ? '[data-k="feature"]' : `[data-k="${k}"][data-v="${autoSel[k]}"]`).focus();
+  };
+  $('autoBody').addEventListener('click', e => {
+    if (e.target.id !== 'autoGo') return;
+    const b = game.bet;
+    modal.close();
+    game.startAuto({ count: autoSel.count, loss: autoSel.loss * b, single: autoSel.single * b, feature: autoSel.feature });
   });
+  $('btnTurbo').onclick = () => { click(); prefs.turbo = !prefs.turbo; savePrefs(); applyPrefs(); };
+  $('btnMute').onclick = () => { prefs.muted = !prefs.muted; savePrefs(); applyPrefs(); click(); };
+  $('btnMenu').onclick = e => { click(); openMenu(menuTab, e.currentTarget); };
+  document.querySelectorAll('.tab').forEach(tb => { tb.onclick = () => { click(); selectTab(tb.dataset.tab); }; });
+  $('menu').querySelector('.tabs').addEventListener('keydown', e => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const names = ['paytable', 'history', 'settings'], i = names.indexOf(menuTab) + (e.key === 'ArrowRight' ? 1 : -1);
+    selectTab(names[(i + 3) % 3]); $('tb-' + menuTab).focus();
+  });
+  $('tab-settings').addEventListener('click', e => {
+    const sw = e.target.closest('[data-pref]'); if (!sw) return;
+    const k = sw.dataset.pref; prefs[k] = !prefs[k]; savePrefs(); applyPrefs(); sw.setAttribute('aria-checked', prefs[k]); click();
+  });
+  $('tab-settings').addEventListener('input', e => {
+    if (e.target.id !== 'vol') return;
+    prefs.vol = +e.target.value; prefs.muted = prefs.vol === 0; savePrefs(); applyPrefs();
+  });
+  document.querySelectorAll('[data-close]').forEach(b => { b.onclick = () => { click(); modal.close(); }; });
+  document.querySelectorAll('.overlay[role="dialog"]').forEach(o => o.addEventListener('click', e => { if (e.target === o) modal.close(); }));
+  const spaceOk = e => e.code === 'Space' && prefs.space && !modal.stack.length && $('start').hidden && e.target.tagName !== 'INPUT';
+  addEventListener('keydown', e => {
+    if (e.code === 'Escape' && modal.stack.length) { e.preventDefault(); modal.close(); return; }
+    if (e.key === 'Tab' && modal.stack.length) { modal.trap(e); return; }
+    if (spaceOk(e)) { e.preventDefault(); if (!e.repeat) game.press(); }
+  });
+  addEventListener('keyup', e => { if (spaceOk(e)) e.preventDefault(); }); // stop Space from also clicking the focused button
   ui.update();
 }
 boot();

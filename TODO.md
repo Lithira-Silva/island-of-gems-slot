@@ -63,15 +63,17 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [ ] Spine integration (`spine-pixi-v8`) with a static atlas fallback on the low tier
 - [ ] FX: particle pool, bloom (big wins only), godrays on the Lion Rock trigger, shockwave on multiplier steps
 - [ ] Howler AudioDirector with buses, ducking and state-driven stems
-- [ ] Layouts for landscape 16:9, portrait 9:19.5 and tablet 4:3, plus safe areas
+- [ ] Layouts for landscape 16:9, portrait 9:19.5 and tablet 4:3, plus safe areas. The prototype covers landscape and portrait; tablet is letterboxed
 - [ ] Quality tiers detected automatically
 - [ ] Buy Feature UI with a confirmation dialog that shows the cost and mode RTP
 - [ ] Paytable and rules generated from config, showing RTP per mode and the max win
 - [ ] Settings: sound and music volume, turbo, quick spin, reduced motion, and space-to-spin
-- [ ] Autoplay with limits (count, loss limit, single-win limit, stop on feature)
+- [ ] Autoplay with limits (count, loss limit, single-win limit, stop on feature). Done in the prototype; port it
 - [ ] Jurisdiction profiles (minimum spin time, turbo, slam stop and autoplay switches)
-- [ ] `prefers-reduced-motion` mode and a colour-blind-safe payline palette. The prototype ignores it today: fireflies, embers, star twinkle and the coin shower always animate (flagged by `ui-ux-pro-max`)
-- [ ] Touch targets ≥ 44 px on phones. The prototype's `.sq`, `.icon` and `.tog` buttons are sized in `cqw` and shrink far below that on a 375 px screen (flagged by `ui-ux-pro-max`)
+- [x] `prefers-reduced-motion` mode in the prototype (OS setting plus an in-game switch; README §3.1). Port it.
+- [ ] Colour-blind-safe payline palette
+- [x] Touch targets in the prototype: ≥ 44 px in portrait, ≥ 40 px on phones in landscape (bet −/+ are 32 px there; recheck on real devices)
+- [x] Prototype UI pass: spin gem, responsive control bar, menu (paytable, history, settings), autoplay with limits, bet picker, session clock (README §3.1). The Svelte UI kit should match it
 - [ ] Self-hosted, subsetted fonts with no runtime Google Fonts
 - [ ] Remove the legacy `frontend/index.html` once the port reaches parity
 
