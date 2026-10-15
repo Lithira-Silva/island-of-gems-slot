@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
+
+# parity fixtures are regenerated, never committed
+tools/parity/fixtures*.jsonl

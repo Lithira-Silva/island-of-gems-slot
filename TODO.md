@@ -16,20 +16,20 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [x] Rename the "Perahera" free spins to **Gem Rush Free Spins** / **Gem Multiplier**
 - [x] Rename the game from *Lanka Tusker Treasures* to **Island of Gems** (`gameId: island_of_gems`, v0.2.0)
 - [x] Use English names for the audio cues (`chime`, `impact`, hand drum, reed horn)
-- [ ] Write `tools/theme-guard` and add it to CI (the skill script exists in `.claude/skills/theme-guard/`)
+- [x] Add theme-guard to CI (`.github/workflows/ci.yml` runs the skill script on every push and PR)
 - [ ] Get an independent cultural sensitivity review of the final art from 2+ reviewers outside the team
 - [ ] Get legal advice on supplying gambling software from your jurisdiction, plus a Stake Engine onboarding check
 - [ ] Register the trademark and domain for "Island of Gems", and check for conflicts with existing slot titles
 
 ## Phase 1: Math (P0)
 - [ ] Port `engine.py` into the Stake **math-sdk** structure (`game_config`, `gamestate`, events)
-- [ ] Add a `pytest` and `hypothesis` suite for board evaluation (wild substitution, wild-only lines, best-per-line)
+- [x] Add a `pytest` and `hypothesis` suite for board evaluation (wild substitution, wild-only lines, best-per-line): `math/tests/test_engine.py`, checked against a brute-force oracle
 - [ ] Use a numba-JIT evaluator, with a Rust/pyo3 core if 1B-round runs are needed
-- [ ] Decide the feature set for v1.0 from ARCHITECTURE §6. The recommended set is Gem Rush, Bonus Buy, Super Buy and Elephant Stampede
-- [ ] Add math for the **Bonus Buy** mode (100x) and **Super Buy** mode (300x, x3 start multiplier)
-- [ ] Add math for **Elephant Stampede** (random expanding wild reels)
+- [x] Decide the feature set for v1.0 (decided 2026-10-15): Gem Rush, Bonus Buy, Super Buy and Elephant Stampede, then max win 10,000x. Hold & Win moves to a later update
+- [x] Add math for the **Bonus Buy** mode (100x) and **Super Buy** mode (x3 start multiplier; priced at 152x from its measured value, user decision 2026-10-15)
+- [x] Add math for **Elephant Stampede** (1 in 93, 1–3 of reels 2–4 fully wild, never covering a scatter)
 - [ ] (P1) Add math for **Lion Rock Hold & Win** with Mini, Minor, Major and Grand
-- [ ] Raise the max win to 10,000x and shape the tail with the optimizer
+- [ ] Raise the max win to 10,000x and shape the tail with the optimizer. The cap is raised (v0.3.0); the highest observed win is 2,410x, so the tail still needs shaping
 - [ ] Add RTP variants (for example 96.0 / 94.0 / 92.0) using reel and LUT weights only **[verify Stake requirements]**
 - [ ] Run 100M+ rounds per mode and per variant; RTP must land within ±0.1% of target
 - [ ] Produce the math report notebook as HTML (RTP, hit rate, volatility index, win distribution, max-win odds, feature frequency)
@@ -65,7 +65,7 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [ ] Howler AudioDirector with buses, ducking and state-driven stems
 - [ ] Layouts for landscape 16:9, portrait 9:19.5 and tablet 4:3, plus safe areas. The prototype covers landscape and portrait; tablet is letterboxed
 - [ ] Quality tiers detected automatically
-- [ ] Buy Feature UI with a confirmation dialog that shows the cost and mode RTP
+- [ ] Buy Feature UI with a confirmation dialog that shows the cost and mode RTP. Done in the prototype (Buy button, mode cards, confirm step); port it
 - [ ] Paytable and rules generated from config, showing RTP per mode and the max win
 - [ ] Settings: sound and music volume, turbo, quick spin, reduced motion, and space-to-spin
 - [ ] Autoplay with limits (count, loss limit, single-win limit, stop on feature). Done in the prototype; port it
@@ -78,7 +78,7 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [ ] Remove the legacy `frontend/index.html` once the port reaches parity
 
 ## Phase 5: QA (P0)
-- [ ] Parity runner covering 1M random boards per mode across TS and Python, with zero mismatches
+- [ ] Parity runner covering 1M random boards per mode across TS and Python, with zero mismatches. `tools/parity/` already does this for the prototype JS (320k fixtures pass); point it at `packages/engine-ts` after the port
 - [ ] Vitest golden timelines for each book fixture type
 - [ ] Playwright visual regression across 3 layouts × key states
 - [ ] Nightly soak test of 10,000 spins (memory, long tasks, audio leaks)
@@ -86,7 +86,7 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [ ] Replay every event type and every big-win tier from real books
 
 ## Phase 6: CI/CD (P1)
-- [ ] GitHub Actions jobs: ruff, eslint, svelte-check, vitest, pytest, parity, theme-guard, build, size-limit and Playwright
+- [ ] GitHub Actions jobs: ruff, eslint, svelte-check, vitest, pytest, parity, theme-guard, build, size-limit and Playwright. Done so far in `.github/workflows/ci.yml`: build + config-sync check, pytest, parity, theme-guard
 - [ ] Lighthouse CI budgets (ARCHITECTURE §8)
 - [ ] Release workflow: tag, then build the math and frontend artifacts and attach the math report
 - [ ] Renovate or Dependabot, plus `pnpm audit`

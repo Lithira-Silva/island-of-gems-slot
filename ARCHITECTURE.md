@@ -126,6 +126,7 @@ island-of-gems/
   "events": [
     { "type": "reveal", "gameType": "basegame", "stops": [41,19,50,6,9], "board": [["L1","L3","H1"], ...] },
     { "type": "winInfo", "wins": [{ "line": 0, "symbol": "L3", "count": 4, "pay": 25 }], "amount": 4.2, "multiplier": 1 },
+    { "type": "elephantStampede", "reels": [1, 3] },   // optional, base game only, right after the base reveal
     { "type": "freeSpinTrigger", "positions": [[0,1],[2,0],[4,2]], "totalFs": 10 },
     { "type": "multiplier", "value": 3 },
     { "type": "finalWin", "amount": 4.2 }
@@ -138,13 +139,13 @@ island-of-gems/
 ### 4.2 Lookup table
 `lookUpTable_<mode>_<n>.csv` has the rows `bookId,weight,payoutMultiplier`. The optimizer edits weights only and never edits books.
 
-### 4.3 Bet modes (planned)
+### 4.3 Bet modes (`base`, `bonus` and `super` are implemented in v0.3.0)
 | Mode | Cost | Content |
 |---|---|---|
 | `base` | 1x | Normal play |
 | `ante` | 1.25x | Free-spin trigger rate doubled |
 | `bonus` | 100x | Buy Gem Rush Free Spins (guaranteed 3+ scatters) |
-| `super` | 300x | Buy Super Gem Rush (multiplier starts at x3 and never resets) |
+| `super` | 152x | Buy Super Gem Rush (multiplier starts at x3). Priced from its measured value: 300x would only return ~49% |
 
 Each mode has its own books, LUT and RTP target. Every mode must sit in the same RTP band **[verify Stake rules on buy modes and their RTP]**.
 
@@ -202,7 +203,7 @@ What players and streamers reward: big readable moments, a reachable top win, a 
 |---|---|---|---|
 | 1 | **Gem Rush Free Spins** (exists) | A progressive multiplier that grows +1 on each winning spin | Baseline |
 | 2 | **Bonus Buy / Super Buy** | Stake bet modes `bonus` and `super` (see §4.3) | A new mode, books and LUT each |
-| 3 | **Elephant Stampede** | A random base-game event (about 1 in 70) that turns 1–3 full reels (2–4) into expanding Golden Elephant wilds | Base RTP up, so retune the low symbols |
+| 3 | **Elephant Stampede** (v0.3.0) | A random base-game event (1 in 93) that turns 1–3 full reels (2–4) without a scatter into Golden Elephant wilds | +10.5% base RTP, paid for by fewer base wilds |
 | 4 | **Lion Rock Hold & Win** | 6+ Gem Coin symbols trigger 3 respins, and each new coin resets the count. Coins carry 1x–50x values, with Mini, Minor, Major and Grand (25x, 50x, 250x, 2,000x) | A second bonus, a new symbol and a separate reel set |
 | 5 | **Max win 10,000x** | Raise the cap after features 2–4 so the top tier is reachable around 1 in 2–5M | Needs the optimizer to shape the distribution |
 | 6 | **Ante bet** | `ante` mode doubles the scatter weight | Its own books |

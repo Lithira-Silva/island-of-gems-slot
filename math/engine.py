@@ -2,7 +2,8 @@
 
 This module is the single source of truth for game rules. The frontend demo
 (frontend/index.html, `MathEngine`) mirrors it 1:1 and must stay in sync.
-All win amounts are expressed as multiples of the TOTAL bet.
+All win amounts are expressed as multiples of the base bet (the cost of a `base` spin).
+Every random draw goes through `rng.randrange(n)`, so a recorded draw list replays a round exactly.
 """
 from __future__ import annotations
 
@@ -39,6 +40,8 @@ class Engine:
         self.mult_max = fs["multiplierMax"]
         self.max_win = cfg["maxWinMultiplier"]
         self.strips = cfg.get("strips")
+        self.stampede = cfg.get("stampede")
+        self.modes = cfg.get("betModes", {"base": {"cost": 1}})
 
     # ---- board -------------------------------------------------------------
     def draw(self, rng, mode: str):
@@ -46,6 +49,32 @@ class Engine:
         stops = [rng.randrange(len(s)) for s in strips]
         board = [[s[(st + r) % len(s)] for r in range(ROWS)] for s, st in zip(strips, stops)]
         return stops, board
+
+    def roll_stampede(self, rng, board) -> list[int]:
+        """Elephant Stampede: with chance num/den, turn 1-3 full reels wild. Only reels in `reels` that show no
+        scatter can be picked, so a stampede never removes a scatter. Returns the chosen reel indexes, sorted."""
+        st = self.stampede
+        if not st:
+            return []
+        num, den = st["chance"]
+        if rng.randrange(den) >= num:
+            return []
+        weights = sorted((int(k), v) for k, v in st["countWeights"].items())
+        x, k = rng.randrange(sum(v for _, v in weights)), 0
+        for k, v in weights:
+            if x < v:
+                break
+            x -= v
+        avail = [r for r in st["reels"] if SCATTER not in board[r]]
+        picks = [avail.pop(rng.randrange(len(avail))) for _ in range(min(k, len(avail)))]
+        return sorted(picks)
+
+    def base_spin(self, rng):
+        """One base-game reveal: landed board, stampede reels, and the board that is evaluated."""
+        stops, board = self.draw(rng, "base")
+        wild_reels = self.roll_stampede(rng, board)
+        played = [[WILD] * ROWS if r in wild_reels else col for r, col in enumerate(board)]
+        return stops, board, wild_reels, played
 
     # ---- evaluation --------------------------------------------------------
     def line_win(self, syms):
@@ -88,12 +117,20 @@ class Engine:
         return wins, scatters, line_total + scatter_total
 
     # ---- full round ---------------------------------------------------------
-    def play_round(self, rng, record: bool = False) -> dict:
+    def play_round(self, rng, record: bool = False, mode: str = "base") -> dict:
+        """Play one round of a bet mode. Buy modes (`buy: true`) repeat natural base spins until 3+ scatters land,
+        so the bought bonus is exactly the natural one; `multiplierStart` in the mode overrides the free-spin start."""
+        m = self.modes[mode]
         events = []
-        stops, board = self.draw(rng, "base")
-        wins, scatters, base_win = self.evaluate(board)
+        while True:
+            stops, board, wild_reels, played = self.base_spin(rng)
+            if not m.get("buy") or sum(col.count(SCATTER) for col in played) >= 3:
+                break
+        wins, scatters, base_win = self.evaluate(played)
         if record:
             events.append({"type": "reveal", "gameType": "basegame", "stops": stops, "board": board})
+            if wild_reels:
+                events.append({"type": "elephantStampede", "reels": wild_reels})
             if wins or base_win:
                 events.append({"type": "winInfo", "wins": wins, "scatters": scatters, "amount": round(base_win, 4)})
 
@@ -102,7 +139,7 @@ class Engine:
         n_sc = len(scatters)
         if n_sc >= 3:
             left = self.fs_award[min(n_sc, 5)]
-            mult = self.mult_start
+            mult = m.get("multiplierStart", self.mult_start)
             if record:
                 events.append({"type": "freeSpinTrigger", "totalFs": left, "positions": scatters})
             while left > 0:
@@ -143,6 +180,8 @@ class Engine:
             "free": free_win,
             "fsTriggered": n_sc >= 3,
             "fsSpins": fs_spins,
+            "stampede": len(wild_reels),
             "capped": capped,
+            "cost": m["cost"],
             "events": events,
         }

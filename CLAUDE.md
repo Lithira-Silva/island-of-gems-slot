@@ -21,7 +21,7 @@ The frontend only *replays* book events from the RGS (or from `LocalDemoProvider
 Change rules there, then run `python build.py`. The `<script id="game-config">` block in `frontend/index.html` is generated, so never edit it by hand. The JS `MathEngine` must stay 1:1 with `math/engine.py`, which the `parity-check` skill verifies.
 
 ### 5. Math changes need fresh numbers
-Any change to the paytable, reels or features must re-run `python simulate.py exact` and `mc`, and update the stats table in `README.md`. RTP must stay inside the target band in `game_design.json` (`targetRtp` ±0.5% until tuned to ±0.1%). Follow the `math-tune` skill.
+Any change to the paytable, reels or features must re-run `python simulate.py exact` and `mc` for every bet mode, update the stats table in `README.md` and the `rtp` of each mode in `betModes` (the paytable reads it). RTP must stay inside the target band in `game_design.json` (`targetRtp` ±0.5% until tuned to ±0.1%). Follow the `math-tune` skill.
 
 ## Commands
 
@@ -29,8 +29,11 @@ Any change to the paytable, reels or features must re-run `python simulate.py ex
 cd math
 python build.py                                  # strips + config + inject into frontend
 python simulate.py exact                         # fast exact base RTP (+ FS EV)
-python simulate.py mc --rounds 2400000 --workers 12
-python simulate.py books --rounds 100000         # books_base.jsonl + lookUpTable_base_0.csv
+python simulate.py mc --mode base --rounds 24000000 --workers 16   # also --mode bonus / super (480k rounds is enough)
+python simulate.py books --mode base --rounds 100000              # books_<mode>.jsonl + lookUpTable_<mode>_0.csv
+cd .. && python tools/parity/gen_fixtures.py && node tools/parity/check.mjs   # JS engine vs engine.py, must print PASS
+python -m venv .venv && .venv/Scripts/pip install -r requirements-dev.txt   # once (macOS/Linux: .venv/bin/pip)
+.venv/Scripts/python -m pytest math/tests -q     # engine rule tests (pytest + hypothesis)
 cd .. && python -m http.server 8765 --directory frontend   # http://localhost:8765
 ```
 
@@ -75,16 +78,16 @@ Results from the design skills are only recommendations. The hard rules above wi
 
 | ID | Name | Kind | Notes |
 |---|---|---|---|
-| W | Golden Elephant | wild | Gem crown and jeweled saddle cloth. Substitutes for everything except S |
-| S | Lion Rock | scatter | Rock fortress with giant lion paws. Triggers Gem Rush Free Spins |
+| W | Golden Elephant | wild | Realistic Asian elephant with a gem crown and a velvet saddle cloth, lit by a warm gold rim light. No face cover (it would read as a festival caparison). Substitutes for everything except S |
+| S | Lion Rock | scatter | Sunset medallion in a gold ring: domed rock fortress, summit trees, giant lion paws and stairway, jungle. Triggers Gem Rush Free Spins |
 | H1 | Leopard | high | |
-| H2 | Blue Sapphire | high | |
-| H3 | Star Ruby | high | |
-| H4 | Cat's Eye | high | Chrysoberyl gem |
-| H5 | Moonstone | high | The **gemstone** (blue sheen cabochon), never the carved step |
+| H2 | Blue Sapphire | high | Faceted oval brilliant in a four-claw gold setting |
+| H3 | Star Ruby | high | Cabochon with a six-rayed star (asterism) |
+| H4 | Cat's Eye | high | Chrysoberyl cabochon with one sharp band of light |
+| H5 | Moonstone | high | The **gemstone**: milky cabochon with a floating blue sheen, never the carved step |
 | L1–L4 | 10, 9, 8, 7 | low | |
 
-The feature names are **Gem Rush Free Spins** and the **Gem Multiplier**. The big-win tiers are BIG, MEGA, EPIC and LEGENDARY.
+The feature names are **Gem Rush Free Spins**, the **Gem Multiplier**, **Elephant Stampede**, **Bonus Buy** and **Super Buy**. The big-win tiers are BIG, MEGA, EPIC and LEGENDARY.
 
 ## Conventions
 - Python 3.12+ with type hints and no third-party dependencies in `engine.py`, which keeps it portable to the Stake math-sdk.

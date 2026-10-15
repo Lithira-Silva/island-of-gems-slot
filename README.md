@@ -30,24 +30,31 @@ Open http://localhost:8765. Press **Space** to spin. Pressing Space or clicking 
 
 QA helper (browser console, demo provider only):
 `game.provider.force(r => r.events.some(e => e.type === 'freeSpinTrigger'))` queues a matching round for the next spin.
+Add a mode to force a buy round: `game.provider.force(r => r.payoutMultiplier > 20000, 'bonus')`. Force a stampede with `e.type === 'elephantStampede'`.
 
 ---
 
-## 1. Current math model (v0.2.0, the same math as v0.1.0 with the theme renamed)
+## 1. Current math model (v0.3.0: Elephant Stampede, Bonus Buy, Super Buy, 10,000x cap)
 
-| Metric | Value |
-|---|---|
-| RTP | **96.10%** (exact base + 300k FS sessions per trigger size). The full Monte Carlo of 2.4M rounds gives 96.19% ± 0.42% |
-| Base game / free spins split | 65.2% / 30.9% |
-| Hit rate | 36.9% (1 in 2.71) |
-| Free spins frequency | 1 in 195 spins |
-| Volatility (std dev per round) | 6.5, medium |
-| Max win cap | 5,000x |
+| Metric | Base game (1x) | Bonus Buy (100x) | Super Buy (152x) |
+|---|---|---|---|
+| RTP, exact (`simulate.py exact`, 400k FS sessions per trigger size) | **96.01%** | **95.92%** | **96.25%** |
+| RTP, Monte Carlo (`mc`) | 96.11% ± 0.17% (24M rounds) | 95.66% ± 0.13% (480k) | 96.01% ± 0.12% (480k) |
+| Split | lines 53.5% · stampede 10.5% · scatter pays 1.2% · free spins 30.9% | trigger board 3.8% · free spins 91.9% | trigger board 2.5% · free spins 93.5% |
+| Hit rate | 35.3% (1 in 2.83) | 100% | 100% |
+| Gem Rush frequency | 1 in 299 spins, worth 92x on average | every round | every round |
+| Elephant Stampede | 1 in 93 spins | as in base (trigger board only) | as in base |
+| Volatility (std dev per unit of cost) | 8.1 | 0.89 | 0.81 |
+| Max win | cap 10,000x; highest seen 1,540x | highest seen 2,055x | highest seen 2,410x |
+
+The cap is not reachable in practice yet. Shaping the top of the distribution needs the Stake optimizer (TODO Phase 1).
 
 **Features**
 - **Golden Elephant** is the WILD. It substitutes for every symbol except the scatter and also pays on its own.
-- **Lion Rock** is the SCATTER. Three, four or five scatters pay 3x, 15x or 100x the total bet and award 10, 15 or 20 free spins.
-- **Gem Rush Free Spins** use richer reels (more wilds). Each winning free spin raises the **Gem Multiplier** by +1, up to x10. Free spins can retrigger.
+- **Lion Rock** is the SCATTER. Three, four or five scatters pay 3x, 15x or 100x the bet and award 10, 15 or 20 free spins.
+- **Gem Rush Free Spins** use richer reels (more wilds). Each winning free spin raises the **Gem Multiplier** by +1, up to x20. Free spins can retrigger.
+- **Elephant Stampede** (base game, about 1 in 93 spins) turns 1, 2 or 3 of reels 2–4 fully wild (65% / 27% / 8%). It only picks reels that show no scatter, so it never takes a Lion Rock away. Book event: `elephantStampede { reels }`, right after the base `reveal`; the win is evaluated on the wild board.
+- **Bonus Buy** (100x) is the natural Gem Rush: the round repeats natural base spins, stampede included, until 3+ scatters land. **Super Buy** (152x) is the same with the Gem Multiplier starting at x3. Each mode has its own books and lookup table (`simulate.py books --mode bonus`).
 
 **Symbols:** Golden Elephant (W), Lion Rock (S), Leopard, Blue Sapphire, Star Ruby, Cat's Eye, Moonstone (the gem), and the numbers 10, 9, 8 and 7.
 
@@ -101,6 +108,7 @@ Production art replaces the procedural placeholders. Each symbol needs **idle, l
 - **Lion Rock:** paws flex, sun rays sweep, dust falls from the cliff
 - **Leopard:** blinks, ears twitch, a snarl on win
 - **Gems:** specular sweep and sparkle
+- **Elephant Stampede:** the herd charges down each chosen reel on a gold column, with dust, a short screen shake (off with reduced motion), a ground rumble, a hand-drum run and a reed-horn call; then the reel locks as full wilds
 - **Moonstone:** the blue sheen drifts across the stone
 - **Numbers:** a gold shine sweep
 
@@ -159,6 +167,6 @@ The prototype synthesizes everything in WebAudio so it runs with no assets. For 
 ## 7. Known prototype gaps
 - **Placeholder art.** Symbols are drawn in code; production needs commissioned art.
 - **Layout.** Landscape, phone landscape and portrait work (see §3.1). Tablet 4:3 uses the landscape layout with letterboxing.
-- **No automated parity test.** Nothing yet checks the JS engine against `engine.py`; write one that compares `lineWin` on random boards.
+- **Parity is checked, not yet in CI.** `tools/parity/` compares the JS `MathEngine` with `engine.py` on base, free, uniform-random and edge-case boards, and replays full rounds (free spins, multiplier, retriggers, max-win cap) from Python's recorded reel stops. Run 1M boards per mode before release.
 - **Responsible-gambling profiles.** Autoplay limits, reduced motion and a session clock are in. Jurisdiction switches (minimum spin time, no turbo, no autoplay) and a timed reality-check dialog are not.
 - **`StakeRGSProvider` is untested.** It is a skeleton and must be validated against the live RGS spec.

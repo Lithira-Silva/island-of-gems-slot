@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  math:
+    name: math rules, config sync and parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build config (seeded strips) and inject into the frontend
+        run: cd math && python build.py
+      - name: Generated config in frontend/index.html is up to date
+        run: git diff --exit-code -- frontend/index.html || (echo "::error::Run 'cd math && python build.py' and commit the injected config" && exit 1)
+      - name: Engine rule tests
+        run: |
+          pip install -r requirements-dev.txt
+          python -m pytest math/tests -q
+      - name: JS MathEngine parity with engine.py
+        run: |
+          python tools/parity/gen_fixtures.py --boards 50000 --rounds 10000
+          node tools/parity/check.mjs
+
+  theme:
+    name: theme-guard (no religious imagery, English only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -I .claude/skills/theme-guard/scripts/check_theme.py

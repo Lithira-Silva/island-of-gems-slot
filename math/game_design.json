@@ -1,11 +1,19 @@
 {
   "gameId": "island_of_gems",
   "name": "Island of Gems",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "reels": 5,
   "rows": 3,
   "targetRtp": 0.96,
-  "maxWinMultiplier": 5000,
+  "maxWinMultiplier": 10000,
+  "_betModesUnit": "cost in base bets; wins are always in base bets. rtp = measured by simulate.py exact (v0.3.0); update it after every retune",
+  "betModes": {
+    "base":  { "cost": 1, "rtp": 0.9601 },
+    "bonus": { "cost": 100, "buy": true, "label": "Bonus Buy", "rtp": 0.9592 },
+    "super": { "cost": 152, "buy": true, "multiplierStart": 3, "label": "Super Buy", "rtp": 0.9625 }
+  },
+  "_stampede": "Elephant Stampede: chance num/den per base spin; picks 1-3 of `reels` (0-based) that show no scatter and turns them fully wild",
+  "stampede": { "chance": [1, 93], "reels": [1, 2, 3], "countWeights": { "1": 65, "2": 27, "3": 8 } },
   "symbols": {
     "W":  { "name": "Golden Elephant",     "kind": "wild",    "label": "WILD" },
     "S":  { "name": "Lion Rock"          , "kind": "scatter", "label": "BONUS" },
@@ -39,7 +47,7 @@
     "retrigger": { "3": 5,  "4": 10, "5": 15 },
     "multiplierStart": 1,
     "multiplierStep": 1,
-    "multiplierMax": 10,
+    "multiplierMax": 20,
     "_rule": "Each free-spin win is multiplied by the current Gem Multiplier, which then grows by multiplierStep (capped)."
   },
   "paylines": [
@@ -51,18 +59,18 @@
   "stripSeed": 20261015,
   "reelWeights": {
     "base": [
-      { "W": 0, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 11, "L4": 12 },
-      { "W": 4, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 11, "L4": 12 },
-      { "W": 4, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 11, "L4": 12 },
-      { "W": 4, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 11, "L4": 12 },
-      { "W": 2, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 11, "L4": 12 }
+      { "W": 0, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 12, "L2": 13, "L3": 14, "L4": 15 },
+      { "W": 3, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 12, "L2": 13, "L3": 14, "L4": 15 },
+      { "W": 3, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 12, "L2": 13, "L3": 14, "L4": 15 },
+      { "W": 3, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 12, "L2": 13, "L3": 14, "L4": 15 },
+      { "W": 2, "S": 2, "H1": 3, "H2": 4, "H3": 5, "H4": 6, "H5": 7, "L1": 12, "L2": 13, "L3": 14, "L4": 15 }
     ],
     "free": [
       { "W": 0, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
-      { "W": 10, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
-      { "W": 11, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
-      { "W": 10, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
-      { "W": 8, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 }
+      { "W": 13, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
+      { "W": 14, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
+      { "W": 13, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 },
+      { "W": 12, "S": 1, "H1": 4, "H2": 5, "H3": 5, "H4": 6, "H5": 7, "L1": 9, "L2": 10, "L3": 10, "L4": 11 }
     ]
   }
 }

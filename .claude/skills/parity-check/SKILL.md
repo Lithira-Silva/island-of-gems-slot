@@ -10,15 +10,16 @@ The client's evaluator only exists for the demo and for presentation (line highl
 ## Run it
 
 1. Rebuild the config: `cd math && python build.py`.
-2. Generate fixtures in Python with a fixed seed: N random boards from both the `base` and `free` strips, plus the `engine.py` results (line wins, scatter count and pay, FS award) as JSON lines:
+2. Generate fixtures from `engine.py` with a fixed seed. It writes boards from the `base` and `free` strips, uniform-random boards (these reach ties and 5-scatter boards the strips rarely produce), hand-picked edge cases, and full recorded rounds (half of them forced free-spin rounds):
    ```bash
-   python -c "import engine, json, random; ..."   # write tools/parity/fixtures.jsonl
+   python tools/parity/gen_fixtures.py                       # 100k boards per source + 20k rounds (~1 min)
+   python tools/parity/gen_fixtures.py --boards 1000000 --rounds 200000   # before release
    ```
-   If `tools/parity/` does not exist yet, create `tools/parity/gen_fixtures.py` and `tools/parity/check.mjs`. Start with 100k boards per mode, then use 1M before release.
-3. Evaluate the same boards in JS. Load `MathEngine` from the prototype (extract the `<script>` block) or import from `packages/engine-ts` once the port exists. Compare field by field.
+3. Check them in JS. `check.mjs` loads the injected config and the `MathEngine` class exactly as they ship in `frontend/index.html` (later: import from `packages/engine-ts`). Boards are compared field by field; rounds are replayed from Python's recorded reel stops and the whole event stream must match.
    ```bash
-   node tools/parity/check.mjs tools/parity/fixtures.jsonl
+   node tools/parity/check.mjs                               # prints PASS or the first mismatches, exit 1 on fail
    ```
+   The fixture file is gitignored; regenerate it, never commit it.
 4. **The pass condition is zero mismatches.** On a mismatch, print the board, both results and the line index, fix the side that disagrees with `engine.py`, and re-run.
 
 ## Notes

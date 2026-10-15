@@ -68,6 +68,8 @@
     background: linear-gradient(180deg, rgba(21, 38, 79, .94), rgba(10, 18, 42, .94)); border: 1px solid var(--line); transition: background .15s, color .15s; }
   .mode svg { width: calc(var(--b) * .4); height: calc(var(--b) * .4); flex: none; }
   .mode:hover { border-color: var(--gold); }
+  .mode.buy { color: var(--gold-pale); border-color: var(--gold); background: linear-gradient(180deg, rgba(120, 20, 50, .95), rgba(60, 6, 24, .95)); }
+  .mode.buy:not(:disabled):hover { filter: brightness(1.15); }
   .mode[aria-pressed="true"] { color: #2a1700; border-color: var(--gold); background: linear-gradient(180deg, var(--gold-pale), var(--gold) 60%, #c8902e); }
 
   /* ---- signature: the Spin gem (octagon cut, gold setting, emerald → ruby while spinning) */
@@ -120,6 +122,19 @@
   .chip:hover { border-color: var(--gold); }
   .chip[aria-pressed="true"] { color: #2a1700; border-color: var(--gold); background: linear-gradient(180deg, var(--gold-pale), var(--gold)); }
   .field + .field { margin-top: 18px; }
+  .buycards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .bcard { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 14px; background: #13224a; border: 1px solid var(--line); }
+  .bcard h3 { margin: 0; }
+  .bcard p { margin: 0; flex: 1; font-size: 13px; color: var(--moon); }
+  .bcard .price { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--gold-pale); }
+  .bcard .price small { font-size: 12px; color: var(--mist); margin-left: 4px; }
+  .bcard .cta { min-height: 46px; }
+  .confirm { text-align: center; }
+  .confirm .price { font-size: 30px; font-weight: 800; color: var(--gold-pale); margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+  .confirm .row2 { display: flex; gap: 10px; margin-top: 20px; }
+  .confirm .row2 > * { flex: 1; }
+  .ghost { min-height: 50px; border-radius: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--moon); border: 1px solid rgba(201, 214, 240, .25); }
+  .ghost:hover { border-color: var(--moon); }
   .flabel { margin-bottom: 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--mist); }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--hair); }
   .row .hint { display: block; font-size: 12px; color: var(--mist); }
@@ -190,10 +205,10 @@
     #deck { position: relative; flex: none; background: linear-gradient(180deg, rgba(7, 11, 26, 0), var(--night) 30%); row-gap: 14px; column-gap: 10px;
       padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
       grid-template-columns: 1fr 1fr auto 1fr 1fr;
-      grid-template-areas: "bal bal . win win" "autoplay down spin up turbo" "menu bet bet bet mute"; }
+      grid-template-areas: "bal bal buy win win" "autoplay down spin up turbo" "menu bet bet bet mute"; }
     .side, .tools, .plaque.bet { display: contents; }
     #spin { grid-area: spin; } #balBox { grid-area: bal; } #winBox { grid-area: win; } #btnAuto { grid-area: autoplay; } #btnTurbo { grid-area: turbo; }
-    #betDown { grid-area: down; } #betUp { grid-area: up; } #betVal { grid-area: bet; } #btnMenu { grid-area: menu; } #btnMute { grid-area: mute; }
+    #betDown { grid-area: down; } #betUp { grid-area: up; } #betVal { grid-area: bet; } #btnMenu { grid-area: menu; } #btnMute { grid-area: mute; } #btnBuy { grid-area: buy; }
     #balBox, #winBox { min-width: 0; }
     #deck > *, .side > *, .tools > *, .plaque.bet > * { justify-self: center; }
     #balBox, #winBox, #betVal { justify-self: stretch; }
@@ -247,6 +262,10 @@
 
       <div class="side r">
         <div class="plaque" id="winBox"><span class="lbl">Win</span><b id="win">0.00</b></div>
+        <button class="mode buy" id="btnBuy" aria-label="Buy Gem Rush Free Spins" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21 8 9l4-6 4 6z"/></svg>
+          <span>Buy</span>
+        </button>
         <button class="mode" id="btnAuto" aria-label="Autoplay" aria-haspopup="dialog" aria-pressed="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
           <span id="autoLbl">Auto</span>
@@ -295,6 +314,13 @@
       </div>
     </div>
 
+    <div id="buySheet" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="buyTitle">
+      <div class="sheet narrow" style="width:min(640px,100%)">
+        <header><h2 id="buyTitle">Buy Gem Rush</h2><button class="ib close" data-close aria-label="Close buy feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+        <div class="body" id="buyBody"></div>
+      </div>
+    </div>
+
     <div id="betSheet" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="betTitle">
       <div class="sheet narrow">
         <header><h2 id="betTitle">Total bet</h2><button class="ib close" data-close aria-label="Close bet picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
@@ -305,7 +331,7 @@
 </div>
 
 <!-- Injected by math/build.py — do not edit by hand. -->
-<script id="game-config" type="application/json">{"gameId":"island_of_gems","name":"Island of Gems","version":"0.2.0","reels":5,"rows":3,"targetRtp":0.96,"maxWinMultiplier":5000,"symbols":{"W":{"name":"Golden Elephant","kind":"wild","label":"WILD"},"S":{"name":"Lion Rock","kind":"scatter","label":"BONUS"},"H1":{"name":"Leopard","kind":"high","label":""},"H2":{"name":"Blue Sapphire","kind":"high","label":""},"H3":{"name":"Star Ruby","kind":"high","label":""},"H4":{"name":"Cat's Eye","kind":"high","label":""},"H5":{"name":"Moonstone","kind":"high","label":""},"L1":{"name":"10","kind":"low","label":"10"},"L2":{"name":"9","kind":"low","label":"9"},"L3":{"name":"8","kind":"low","label":"8"},"L4":{"name":"7","kind":"low","label":"7"}},"linePays":{"W":{"3":100,"4":500,"5":2000},"H1":{"3":50,"4":250,"5":1000},"H2":{"3":40,"4":150,"5":600},"H3":{"3":30,"4":100,"5":400},"H4":{"3":25,"4":80,"5":300},"H5":{"3":20,"4":60,"5":250},"L1":{"3":10,"4":40,"5":150},"L2":{"3":10,"4":30,"5":120},"L3":{"3":9,"4":25,"5":100},"L4":{"3":8,"4":25,"5":100}},"scatterPays":{"3":3,"4":15,"5":100},"freeSpins":{"award":{"3":10,"4":15,"5":20},"retrigger":{"3":5,"4":10,"5":15},"multiplierStart":1,"multiplierStep":1,"multiplierMax":10,"_rule":"Each free-spin win is multiplied by the current Gem Multiplier, which then grows by multiplierStep (capped)."},"paylines":[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1],[0,1,1,1,0],[2,1,1,1,2],[1,0,1,2,1],[1,2,1,0,1],[0,1,0,1,0],[2,1,2,1,2],[1,1,0,1,1],[1,1,2,1,1],[0,2,0,2,0],[2,0,2,0,2],[0,2,2,2,0]],"stripSeed":20261015,"strips":{"base":[["L1","L2","H1","H5","H2","H3","H3","L4","H4","H2","H5","H2","L4","H4","L1","L4","L1","L3","H5","H4","H5","L1","L4","H3","L2","L1","S","L4","H5","L3","L2","L4","L3","L3","L2","H4","H5","H1","H4","L4","H3","L1","L3","H1","L2","L1","H4","L3","L3","L3","L2","L3","L2","L2","L2","L4","L4","L4","L3","L1","H3","L2","L4","H2","S","L4","L3","H5","L1"],["L4","L1","L2","L1","L1","H2","L2","H2","H3","L4","H5","H4","L3","L3","L4","H3","S","L1","H4","L3","L3","H4","W","H4","L2","L4","L4","L3","H1","W","L3","L4","L2","H1","H5","L4","L3","H2","L1","L3","L4","H5","L1","H5","L2","H5","L4","H1","H4","L1","L3","W","H3","H4","W","L2","L3","H5","L2","L4","H5","H3","L3","L2","L2","L4","S","L1","H2","L4","H3","L2","L1"],["L4","L4","L3","L4","S","L4","L2","H3","H1","S","H3","H3","L4","H3","W","L1","H5","L2","L2","H1","L1","H2","L3","L1","H4","L2","L4","H3","H5","L3","L2","H4","H5","W","H5","L3","L3","H4","H5","L1","L2","H2","L1","L3","L4","H4","H4","L2","H5","L3","L3","W","L1","L4","L3","L4","W","H5","L3","L2","H2","L1","L4","H4","H2","L4","L1","L2","L2","L1","H1","L3","L4"],["L4","H3","H1","L4","L3","L4","L2","L3","L3","H3","L1","L2","L4","H3","L1","L2","L1","H5","L3","L2","H1","L4","L1","L3","L2","H2","L2","L1","L3","L3","H5","L4","H4","H5","L1","S","H5","L4","H4","L3","L2","L2","H4","L2","L4","L1","H2","H3","L4","S","L4","H2","L1","L3","L3","L3","W","H5","W","W","H4","H5","L2","L1","W","H2","H4","H5","L4","L4","H4","H1","H3"],["H5","L4","H1","L2","H4","H1","L4","L3","L1","H2","H3","H2","L3","L4","L1","L2","L2","L2","H5","L1","L3","L1","H5","H4","L2","H4","W","L4","L4","S","H4","L4","L1","L3","L1","L2","H5","L4","H3","S","L4","L4","L3","L2","H4","L4","L3","H4","H3","L4","L1","L3","H5","H3","H2","L3","L1","H5","L2","H1","L1","L2","H2","L4","H5","L3","L3","L2","W","H3","L3"]],"free":[["H2","H5","L1","L2","H4","L4","L1","H2","H5","H4","L1","H5","L2","L4","H3","L2","H4","H1","L3","H4","L2","L4","H3","L3","H5","L1","H1","L1","H2","H3","L2","H1","L2","L2","L4","L1","S","L2","L4","L3","L2","H2","H4","L2","L3","H3","L1","L3","L4","L3","H1","L1","L4","L3","L4","L3","L4","H2","H5","H5","H4","H3","L3","H5","L3","L1","L4","L4"],["L3","L3","L1","W","L4","H5","L1","H4","L4","H1","L1","L1","L3","L2","H3","W","L2","H2","L2","H5","H3","H2","H4","L1","L1","W","H4","H1","W","H2","L3","L4","L3","L4","H5","H2","L2","H3","H4","L2","L3","H2","H5","L2","H3","H4","W","W","H5","L4","L4","H5","S","L2","L1","L3","L3","L2","W","W","H5","W","H1","L4","L3","L2","L1","H4","L4","H1","L4","L4","L4","W","L3","L1","L2","H3"],["H3","L3","W","H1","L4","L1","L1","L4","L2","W","L1","L3","H3","H2","H5","H4","L3","L3","L3","H5","L3","H4","W","L1","H4","W","H2","W","H1","L4","H3","L4","L3","H5","H4","W","H4","L2","L2","H4","W","L4","H3","H5","S","H5","L2","L4","L4","L4","L2","L4","H2","W","L3","L2","H3","L1","H5","L1","H2","L2","L4","H2","H5","H1","W","L2","L1","W","L4","L1","L3","L1","L2","H1","L2","L3","W"],["W","L4","L1","H5","L1","H3","H5","L1","W","H2","L2","W","H4","L1","H2","H5","H4","H2","L2","H5","L3","H4","L4","L3","L1","L1","H1","L3","L2","L3","L3","H3","S","W","L4","H5","L4","H4","W","L2","H2","L2","W","H1","H4","H2","L4","L2","L2","L1","L2","W","H3","H1","W","L3","L1","L4","L2","L4","H3","L4","W","L4","L2","H5","L3","L3","H5","L3","H3","W","H4","L4","H1","L1","L4","L3"],["L1","H1","H5","L2","L4","H2","L1","L1","H4","L3","H4","H1","L4","L1","H5","W","W","H4","W","W","H3","L3","L3","L1","H2","L3","L1","H5","L4","H5","L2","W","L3","W","L4","L2","L4","H2","L2","L1","H3","L4","L2","H1","H4","H1","L4","L2","H3","W","L4","H4","H3","H5","H4","L4","H2","L4","L1","L3","L3","L4","L2","W","L3","L2","L1","L2","S","H3","L3","L2","H2","H5","H5","L3"]]}}</script>
+<script id="game-config" type="application/json">{"gameId":"island_of_gems","name":"Island of Gems","version":"0.3.0","reels":5,"rows":3,"targetRtp":0.96,"maxWinMultiplier":10000,"betModes":{"base":{"cost":1,"rtp":0.9601},"bonus":{"cost":100,"buy":true,"label":"Bonus Buy","rtp":0.9592},"super":{"cost":152,"buy":true,"multiplierStart":3,"label":"Super Buy","rtp":0.9625}},"stampede":{"chance":[1,93],"reels":[1,2,3],"countWeights":{"1":65,"2":27,"3":8}},"symbols":{"W":{"name":"Golden Elephant","kind":"wild","label":"WILD"},"S":{"name":"Lion Rock","kind":"scatter","label":"BONUS"},"H1":{"name":"Leopard","kind":"high","label":""},"H2":{"name":"Blue Sapphire","kind":"high","label":""},"H3":{"name":"Star Ruby","kind":"high","label":""},"H4":{"name":"Cat's Eye","kind":"high","label":""},"H5":{"name":"Moonstone","kind":"high","label":""},"L1":{"name":"10","kind":"low","label":"10"},"L2":{"name":"9","kind":"low","label":"9"},"L3":{"name":"8","kind":"low","label":"8"},"L4":{"name":"7","kind":"low","label":"7"}},"linePays":{"W":{"3":100,"4":500,"5":2000},"H1":{"3":50,"4":250,"5":1000},"H2":{"3":40,"4":150,"5":600},"H3":{"3":30,"4":100,"5":400},"H4":{"3":25,"4":80,"5":300},"H5":{"3":20,"4":60,"5":250},"L1":{"3":10,"4":40,"5":150},"L2":{"3":10,"4":30,"5":120},"L3":{"3":9,"4":25,"5":100},"L4":{"3":8,"4":25,"5":100}},"scatterPays":{"3":3,"4":15,"5":100},"freeSpins":{"award":{"3":10,"4":15,"5":20},"retrigger":{"3":5,"4":10,"5":15},"multiplierStart":1,"multiplierStep":1,"multiplierMax":20,"_rule":"Each free-spin win is multiplied by the current Gem Multiplier, which then grows by multiplierStep (capped)."},"paylines":[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1],[0,1,1,1,0],[2,1,1,1,2],[1,0,1,2,1],[1,2,1,0,1],[0,1,0,1,0],[2,1,2,1,2],[1,1,0,1,1],[1,1,2,1,1],[0,2,0,2,0],[2,0,2,0,2],[0,2,2,2,0]],"stripSeed":20261015,"strips":{"base":[["L1","L3","H5","L3","L3","H4","L1","L2","L2","L3","H5","H2","H4","L2","L4","L4","L1","L3","H3","L3","H5","L1","L1","L1","L3","H2","H4","L4","L4","H4","L4","L1","H3","L3","L2","L2","H3","L3","L4","L4","L1","L2","L3","L2","L2","H3","L4","L1","L1","S","L2","H1","L4","H3","L4","L2","L4","H4","L2","H5","H1","H4","L2","L4","H5","L4","H2","L3","L1","L4","L2","L3","L4","H5","H1","H2","S","L3","L3","H5","L1"],["L4","L3","L4","H5","H4","L3","H4","H1","H5","L2","W","H2","L3","H3","L3","L4","H3","L3","L1","S","L3","L1","L1","L2","H4","H2","L1","L2","H5","H5","L4","L4","L3","L1","L2","H5","L2","H3","L4","L3","L1","H4","L1","H2","L4","H1","H4","L4","H4","L2","L1","L3","H2","L4","L4","L2","L3","L1","H1","W","L4","S","L1","L2","L2","L2","L3","H5","H3","L4","L4","H3","L2","W","L2","H5","L4","L1","L1","L2","L3","L3","L4","L3"],["L1","L3","L3","L4","L2","L4","H4","L1","L4","H5","L3","H5","H5","L2","L3","H2","H5","H4","L3","L2","L2","L4","L2","L3","H4","L4","H5","H5","L3","W","L1","L3","L2","L4","L1","W","H1","L1","H2","H3","L1","L1","L2","H2","L3","L4","H4","H3","L3","L1","L2","L1","L4","L3","L1","L4","L4","L3","L4","L4","L4","H3","S","L4","H3","H5","L1","H1","L2","H2","S","L3","H1","H3","L1","L2","W","L2","L2","H4","L2","L3","L4","H4"],["L2","S","L2","L4","L3","L3","L3","L2","H2","H5","L4","H4","L2","L3","L4","H4","L1","L2","H5","L4","L4","H4","L1","H1","W","L3","L3","L3","H3","L1","H2","L1","L2","H4","L2","L1","L2","H3","H1","L3","L4","H5","L4","L3","L3","L3","L4","L3","H5","L1","L1","H4","L4","W","H1","H5","L4","W","H2","L2","L2","L1","S","L1","L2","H4","L1","L4","L3","L4","L4","L1","H3","L3","H5","L4","H2","H3","L1","L2","H5","H3","L4","L2"],["L1","L3","L1","L2","L4","L2","L2","L1","H3","H1","L4","H1","L4","H3","H3","L3","L2","H5","L4","S","L3","L4","H2","H3","H3","L2","H4","L4","H5","H1","L1","H4","L2","W","L2","L4","L1","L4","L1","W","L3","L3","L1","L3","L1","H2","H4","L2","L2","L4","H2","H5","L3","H4","L3","S","L1","L4","L4","L4","L2","H5","H2","L3","L2","L1","H5","H5","L2","L1","L3","L4","H4","L2","H5","L3","L3","L1","L3","L4","L3","L4","H4"]],"free":[["H5","L1","L3","L2","L4","H5","H3","L3","L2","S","L4","L3","L2","L3","L1","L3","H4","L2","L3","H5","H5","H3","L4","H4","H5","H1","H5","L4","H1","L1","L3","H4","H4","L4","L2","L2","H4","L4","L4","L1","H2","H1","L1","L4","L4","L1","H3","L3","L2","L3","H2","H2","L2","H2","L4","H1","L2","L1","H5","H4","L1","H3","L1","H3","L3","H2","L4","L2"],["H3","L3","W","H1","L3","L1","L4","L4","L2","W","H5","L3","H2","H2","L4","H4","L3","L2","L3","H4","L3","H4","W","L1","H3","W","H2","W","W","L4","H2","L4","L3","H5","H3","W","H4","L2","L2","H4","W","L4","H3","H5","W","H5","L1","L4","L4","L4","L2","L4","H2","W","L3","L2","H3","L1","H5","L1","H1","L1","L4","H1","H5","H1","W","L2","L1","W","L3","H5","L2","L1","L2","S","L2","L3","W","L1","H4"],["W","H2","L2","H1","H3","L4","W","L1","L2","H5","L4","H5","H1","H3","H4","W","H5","L1","H2","H2","H4","L4","L3","L1","L4","L3","L1","L1","W","H5","L2","H5","H3","W","W","W","H4","L4","H3","W","L3","H1","L4","L3","W","H3","H1","L4","L2","L4","L1","L1","L1","L3","H2","S","L2","W","L2","L1","L4","L2","L4","H5","W","W","L4","L2","L3","H4","L3","L3","H4","L2","H2","W","H4","L3","W","H5","L3","L2"],["L4","L4","S","L1","H1","L4","L3","L2","H3","W","L3","L2","H3","H5","H5","H4","L2","H5","L3","L3","W","W","L1","W","H4","W","H2","H4","H3","L3","L4","H3","L1","H4","L4","W","W","L4","H5","H4","W","H1","L3","L4","H1","H2","L1","H5","H2","L3","L1","L3","W","H3","L1","W","L4","L1","H2","L4","L4","W","L4","L2","L1","L2","H5","L2","L2","W","L2","L2","H5","L3","L1","W","H2","L3","L2","H1","H4"],["W","W","H2","L3","H4","L1","W","L4","H1","W","H1","L4","L1","L1","W","L2","H4","L1","H5","H5","H4","L1","H3","H5","L3","L3","W","L3","L1","W","L2","H1","L4","S","L1","W","L4","H2","L2","L2","L4","L3","H3","L4","L1","L4","H2","L2","H1","L4","L2","L2","L2","L4","H5","H2","L4","H5","H3","H3","L3","L2","W","L3","H3","L4","L3","H4","L2","H5","H2","L3","L1","W","H5","L3","W","H4","W","H4"]]}}</script>
 
 <script>
 'use strict';
@@ -364,12 +390,31 @@ class MathEngine {
     this.fs = cfg.freeSpins;
     this.maxWin = cfg.maxWinMultiplier;
     this.strips = cfg.strips;
+    this.stampede = cfg.stampede || null;
+    this.modes = cfg.betModes || { base: { cost: 1 } };
   }
   draw(rng, mode) {
     const strips = this.strips[mode];
     const stops = strips.map(s => rng.int(s.length));
     const board = strips.map((s, i) => [0, 1, 2].map(r => s[(stops[i] + r) % s.length]));
     return { stops, board };
+  }
+  // Elephant Stampede: chance num/den, then 1-3 candidate reels without a scatter turn fully wild.
+  rollStampede(rng, board) {
+    const st = this.stampede;
+    if (!st) return [];
+    const [num, den] = st.chance;
+    if (rng.int(den) >= num) return [];
+    const weights = Object.entries(st.countWeights).map(([k, v]) => [+k, v]).sort((a, b) => a[0] - b[0]);
+    let x = rng.int(weights.reduce((a, w) => a + w[1], 0)), k = 0;
+    for (const [n, v] of weights) { k = n; if (x < v) break; x -= v; }
+    const avail = st.reels.filter(r => !board[r].includes('S')), picks = [];
+    for (let i = 0, n = Math.min(k, avail.length); i < n; i++) picks.push(avail.splice(rng.int(avail.length), 1)[0]);
+    return picks.sort((a, b) => a - b);
+  }
+  baseSpin(rng) {
+    const d = this.draw(rng, 'base'), wild = this.rollStampede(rng, d.board);
+    return { ...d, wild, played: d.board.map((col, r) => wild.includes(r) ? col.map(() => 'W') : col) };
   }
   pay(sym, n) { return (this.pays[sym] && this.pays[sym][n]) || 0; }
   lineWin(syms) {
@@ -397,18 +442,21 @@ class MathEngine {
     const lineTotal = wins.reduce((a, w) => a + w.pay, 0) / this.lines.length;
     return { wins, scatters, total: lineTotal + (this.scatterPays[scatters.length] || 0) };
   }
-  playRound(rng) {
+  // Buy modes repeat natural base spins until 3+ scatters land, so the bought bonus is the natural one.
+  playRound(rng, mode = 'base') {
     const r4 = x => Math.round(x * 1e4) / 1e4;
-    const events = [];
-    let d = this.draw(rng, 'base');
-    let e = this.evaluate(d.board);
+    const m = this.modes[mode], events = [];
+    let b;
+    do b = this.baseSpin(rng); while (m.buy && b.played.flat().filter(s => s === 'S').length < 3);
+    let d, e = this.evaluate(b.played);
     const baseWin = e.total;
-    events.push({ type: 'reveal', gameType: 'basegame', stops: d.stops, board: d.board });
+    events.push({ type: 'reveal', gameType: 'basegame', stops: b.stops, board: b.board });
+    if (b.wild.length) events.push({ type: 'elephantStampede', reels: b.wild });
     if (e.wins.length || baseWin) events.push({ type: 'winInfo', wins: e.wins, scatters: e.scatters, amount: r4(baseWin) });
     let freeWin = 0;
     const nSc = e.scatters.length;
     if (nSc >= 3) {
-      let left = this.fs.award[Math.min(nSc, 5)], mult = this.fs.multiplierStart, spin = 0;
+      let left = this.fs.award[Math.min(nSc, 5)], mult = m.multiplierStart ?? this.fs.multiplierStart, spin = 0;
       events.push({ type: 'freeSpinTrigger', totalFs: left, positions: e.scatters });
       while (left > 0) {
         left--; spin++;
@@ -441,14 +489,18 @@ class LocalDemoProvider {
   constructor(engine) { this.engine = engine; this.balance = 1000; this.forced = []; }
   async authenticate() { return { balance: this.balance, currency: 'FUN' }; }
   // QA only: queue the next round matching a predicate, e.g. r => r.events.some(e => e.type === 'freeSpinTrigger').
-  force(pred, tries = 500000) {
-    for (let i = 0; i < tries; i++) { const r = this.engine.playRound(SecureRng); if (pred(r)) { this.forced.push(r); return r.payoutMultiplier / 100; } }
+  // Optional mode: force(r => r.events.some(e => e.type === 'elephantStampede')), force(r => r.payoutMultiplier > 20000, 'bonus').
+  force(pred, mode = 'base', tries = 500000) {
+    for (let i = 0; i < tries; i++) { const r = this.engine.playRound(SecureRng, mode); if (pred(r)) { this.forced.push({ mode, round: r }); return r.payoutMultiplier / 100; } }
     return null;
   }
-  async play(bet) {
-    if (bet > this.balance + 1e-9) throw new Error('INSUFFICIENT_FUNDS');
-    this.balance -= bet;
-    const round = this.forced.shift() || this.engine.playRound(SecureRng);
+  // `bet` is the base bet; the mode's cost multiplies it (Bonus Buy = 100x).
+  async play(bet, mode = 'base') {
+    const cost = bet * this.engine.modes[mode].cost;
+    if (cost > this.balance + 1e-9) throw new Error('INSUFFICIENT_FUNDS');
+    this.balance -= cost;
+    const i = this.forced.findIndex(f => f.mode === mode);
+    const round = i >= 0 ? this.forced.splice(i, 1)[0].round : this.engine.playRound(SecureRng, mode);
     return { round, balance: this.balance };
   }
   async endRound(bet, round) { this.balance += round.payoutMultiplier / 100 * bet; return { balance: this.balance }; }
@@ -467,6 +519,7 @@ class StakeRGSProvider {
     return r.json();
   }
   async authenticate() { return this.post('/wallet/authenticate', { sessionID: this.session, language: this.lang }); }
+  // [verify] whether `amount` is the base bet or the mode cost for buy modes in the current Stake Engine spec.
   async play(bet, mode = 'base') { return this.post('/wallet/play', { sessionID: this.session, amount: Math.round(bet * 1e6), mode }); }
   async endRound() { return this.post('/wallet/end-round', { sessionID: this.session }); }
 }
@@ -617,6 +670,12 @@ class SoundEngine {
     [[1, .3], [1.48, .2], [2.1, .16], [2.93, .1], [3.76, .06]].forEach(([r, a]) => this.osc({ f: 72 * r, dur: 4.5, gain: a, attack: .01, verb: .7 }));
     for (let i = 0; i < 6; i++) this.dhum(this.t + .5 + i * .16, this.sfx, .45);
   }
+  stampede() { // ground rumble, a run of hand-drum hits, then a short reed-horn call
+    if (!this.ok()) return;
+    this.noise({ dur: 1.5, type: 'lowpass', f: 160, f2: 60, q: .8, gain: .32, attack: .12 });
+    for (let i = 0; i < 10; i++) this.dhum(this.t + i * .085, this.sfx, .3 + i * .025);
+    [392, 523.25, 659.25].forEach((f, i) => this.horn(f, this.t + .35 + i * .12, .5, this.sfx, .065));
+  }
   fanfare() {
     if (!this.ok()) return;
     const seq = [587.33, 739.99, 880, 1174.66];
@@ -708,82 +767,223 @@ function ribbon(c, text, y, a, b, ink) {
   c.restore();
 }
 
+// Polished gold: a conic gradient gives the angular light bands of real metal.
+function metalGrad(c, cx, cy, rot = 0) {
+  if (!c.createConicGradient) return goldGrad(c, cx - 60, cy - 60, cx + 60, cy + 60);
+  const g = c.createConicGradient(rot, cx, cy);
+  ['#fff4c4', '#d9a441', '#7a4a10', '#f6d47a', '#a8701f', '#fff1b8', '#c48a2c', '#6e3f0c', '#f9e08b', '#fff4c4'].forEach((col, i, a) => g.addColorStop(i / (a.length - 1), col));
+  return g;
+}
+function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function glint(c, x, y, r, a = 1) {
+  c.save(); c.globalCompositeOperation = 'lighter';
+  const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(255,255,255,${a * .9})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore();
+  sparkle(c, x, y, r * 1.2, a);
+}
+function goldBead(c, x, y, r) { // prong / bead with its own highlight
+  const g = c.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r); g.addColorStop(0, '#fffbe0'); g.addColorStop(.45, '#e9b955'); g.addColorStop(1, '#6e3f0c');
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+}
+function bezelSetting(c, cx, cy, rx, ry, beads) {
+  c.save(); c.shadowColor = 'rgba(0,0,0,.65)'; c.shadowBlur = 12; c.shadowOffsetY = 6;
+  c.fillStyle = metalGrad(c, cx, cy, .7); c.beginPath(); c.ellipse(cx, cy, rx + 7, ry + 7, 0, 0, TAU); c.fill(); c.restore();
+  c.strokeStyle = 'rgba(255,248,210,.75)'; c.lineWidth = 1; c.beginPath(); c.ellipse(cx, cy, rx + 6.5, ry + 6.5, 0, Math.PI * .95, Math.PI * 1.75); c.stroke();
+  if (beads) for (let i = 0; i < beads; i++) { const a = i / beads * TAU; goldBead(c, cx + Math.cos(a) * (rx + 4), cy + Math.sin(a) * (ry + 4), 1.5); }
+  c.fillStyle = 'rgba(30,14,0,.7)'; c.beginPath(); c.ellipse(cx, cy, rx + 1.4, ry + 1.4, 0, 0, TAU); c.fill(); // seat shadow
+}
+
+/* ---- Golden Elephant (WILD): realistic Asian elephant, gem crown, velvet saddle cloth, warm gold rim light */
 function drawElephant(c) {
-  glowDisc(c, 80, 62, 78, 'rgba(255,200,80,A)', .55);
-  c.save(); c.translate(-6, 0);
-  const grey = c.createLinearGradient(0, 30, 0, 120); grey.addColorStop(0, '#8b8592'); grey.addColorStop(1, '#4a4550');
-  // legs + anklets
-  [[46, 80], [62, 82], [94, 82], [108, 80]].forEach(([x, y]) => {
-    c.fillStyle = grey; c.beginPath(); c.roundRect(x - 7, y, 14, 34, 5); c.fill();
-    c.fillStyle = goldGrad(c, x - 8, 0, x + 8, 0); c.fillRect(x - 8, y + 22, 16, 5);
-    c.fillStyle = '#d9d2c8'; c.fillRect(x - 6, y + 31, 12, 3);
-  });
-  c.fillStyle = grey; c.beginPath(); c.ellipse(80, 70, 46, 28, 0, 0, TAU); c.fill();
-  c.strokeStyle = '#4a4550'; c.lineWidth = 3; c.beginPath(); c.moveTo(36, 68); c.quadraticCurveTo(28, 82, 32, 98); c.stroke();
-  // gem-studded saddle cloth with scalloped hem
-  const cap = c.createLinearGradient(0, 46, 0, 100); cap.addColorStop(0, '#b0154a'); cap.addColorStop(1, '#4d0820');
-  c.beginPath(); c.moveTo(38, 48); c.quadraticCurveTo(76, 38, 116, 48); c.lineTo(118, 90);
-  for (let x = 118; x > 38; x -= 10) c.quadraticCurveTo(x - 5, 100, x - 10, 90);
-  c.closePath(); c.fillStyle = cap; c.fill(); c.lineWidth = 2.5; c.strokeStyle = goldGrad(c, 38, 40, 118, 100); c.stroke();
-  c.strokeStyle = 'rgba(255,215,120,.85)'; c.lineWidth = 1.5;
-  c.beginPath(); c.moveTo(42, 56); c.quadraticCurveTo(78, 48, 114, 56); c.stroke();
-  c.beginPath(); c.moveTo(40, 86); c.lineTo(116, 86); c.stroke();
-  c.save(); c.shadowColor = '#ffe9a0'; c.shadowBlur = 5; c.fillStyle = '#fff1b8';
-  for (let x = 46; x <= 110; x += 8) for (const y of [64, 72, 80]) { c.beginPath(); c.arc(x + (y === 72 ? 4 : 0), y, 1.6, 0, TAU); c.fill(); }
+  glowDisc(c, 84, 60, 82, 'rgba(255,196,90,A)', .65);
+  const rnd = seeded(77);
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(86, 111, 62, 5, 0, 0, TAU); c.fill(); // ground shadow
+  const leg = (x, top, w, far) => {
+    c.beginPath(); c.moveTo(x - w / 2, top);
+    c.bezierCurveTo(x - w / 2 - 1.5, top + 20, x - w / 2 + 1.5, 98, x - w / 2 - 2, 110);
+    c.quadraticCurveTo(x, 113, x + w / 2 + 2, 110);
+    c.bezierCurveTo(x + w / 2 - 1.5, 98, x + w / 2 + 1.5, top + 20, x + w / 2, top); c.closePath();
+    const g = c.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+    g.addColorStop(0, far ? '#2f292d' : '#4f484c'); g.addColorStop(.42, far ? '#4c4549' : '#8d8489'); g.addColorStop(1, far ? '#221d20' : '#3d363a');
+    c.fillStyle = g; c.fill();
+    c.strokeStyle = 'rgba(25,20,23,.22)'; c.lineWidth = .7;
+    for (const y of [top + 22, top + 24.5, top + 35, top + 37]) { c.beginPath(); c.moveTo(x - w / 2 + 1.5, y); c.quadraticCurveTo(x, y + 1.4, x + w / 2 - 1.5, y); c.stroke(); }
+    c.fillStyle = far ? '#7d756f' : '#ddd5c8';
+    for (const dx of [-w * .3, 0, w * .3]) { c.beginPath(); c.ellipse(x + dx, 109.6, 2.3, 1.4, 0, 0, TAU); c.fill(); }
+  };
+  leg(58, 70, 15, true); leg(118, 68, 14, true);
+  // tail
+  c.strokeStyle = '#4a4347'; c.lineWidth = 2.2; c.lineCap = 'round'; c.beginPath(); c.moveTo(27, 56); c.quadraticCurveTo(18, 70, 21, 88); c.stroke();
+  c.fillStyle = '#2b2528'; c.beginPath(); c.ellipse(21, 91, 2.4, 4.5, .1, 0, TAU); c.fill();
+  leg(40, 70, 17, false); leg(102, 70, 17, false);
+
+  const body = new Path2D();
+  body.moveTo(30, 80);
+  body.bezierCurveTo(20, 64, 24, 44, 42, 35);
+  body.bezierCurveTo(58, 27, 86, 24, 104, 30);
+  body.bezierCurveTo(110, 23, 119, 14, 130, 16);
+  body.bezierCurveTo(138, 12, 147, 19, 147, 31);
+  body.bezierCurveTo(148, 40, 146, 47, 144, 56);
+  body.bezierCurveTo(140, 66, 132, 70, 124, 77);
+  body.bezierCurveTo(118, 83, 110, 85, 100, 85);
+  body.bezierCurveTo(80, 91, 52, 91, 34, 84);
+  body.closePath();
+  const skin = c.createLinearGradient(0, 14, 0, 92); skin.addColorStop(0, '#a49ba0'); skin.addColorStop(.45, '#7a7176'); skin.addColorStop(1, '#3b3438');
+  c.fillStyle = skin; c.fill(body);
+  c.save(); c.clip(body);
+  const vol = c.createRadialGradient(76, 36, 4, 76, 40, 56); vol.addColorStop(0, 'rgba(255,236,210,.32)'); vol.addColorStop(1, 'rgba(255,236,210,0)');
+  c.fillStyle = vol; c.fillRect(0, 0, 160, 140);
+  const head = c.createRadialGradient(134, 26, 2, 134, 30, 22); head.addColorStop(0, 'rgba(255,236,210,.3)'); head.addColorStop(1, 'rgba(255,236,210,0)');
+  c.fillStyle = head; c.fillRect(0, 0, 160, 140);
+  const ao = c.createLinearGradient(0, 66, 0, 92); ao.addColorStop(0, 'rgba(18,12,16,0)'); ao.addColorStop(1, 'rgba(18,12,16,.6)');
+  c.fillStyle = ao; c.fillRect(0, 0, 160, 140);
+  // wrinkled skin: fine crossing creases, then trunk rings
+  for (let i = 0; i < 170; i++) {
+    const x = 22 + rnd() * 128, y = 16 + rnd() * 76, l = 3 + rnd() * 6, a = (rnd() - .5) * .9;
+    c.strokeStyle = rnd() < .7 ? 'rgba(25,18,22,.13)' : 'rgba(255,240,225,.09)'; c.lineWidth = .6;
+    c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + l * .5, y + Math.sin(a) * l + 1, x + l, y + Math.sin(a) * l); c.stroke();
+  }
+  // warm rim light from the golden glow behind
+  const rim = c.createLinearGradient(0, 12, 0, 46); rim.addColorStop(0, 'rgba(255,214,140,.7)'); rim.addColorStop(1, 'rgba(255,214,140,0)');
+  c.filter = 'blur(1.5px)'; c.strokeStyle = rim; c.lineWidth = 6; c.stroke(body); c.filter = 'none';
   c.restore();
-  c.fillStyle = goldGrad(c, 70, 64, 86, 80); c.beginPath(); c.arc(78, 71, 8, 0, TAU); c.fill();
-  c.fillStyle = '#e0103a'; c.beginPath(); c.arc(78, 71, 3.6, 0, TAU); c.fill();
-  // ear, head, trunk
-  c.fillStyle = '#6d6774'; c.beginPath(); c.ellipse(110, 58, 12, 18, -.2, 0, TAU); c.fill();
-  c.fillStyle = grey; c.beginPath(); c.arc(124, 48, 22, 0, TAU); c.fill();
-  c.strokeStyle = grey; c.lineCap = 'round'; c.lineWidth = 12;
-  c.beginPath(); c.moveTo(138, 56); c.bezierCurveTo(148, 74, 140, 96, 148, 108); c.quadraticCurveTo(152, 114, 158, 106); c.stroke();
-  c.strokeStyle = 'rgba(40,36,44,.5)'; c.lineWidth = 1.2;
-  for (let i = 0; i < 6; i++) { const y = 70 + i * 6; c.beginPath(); c.moveTo(139 + (i > 3 ? 4 : 0), y); c.lineTo(149 + (i > 3 ? 2 : 0), y + 1); c.stroke(); }
-  // jeweled headpiece
-  c.beginPath(); c.moveTo(108, 36); c.quadraticCurveTo(124, 16, 142, 34); c.lineTo(146, 70);
-  for (let i = 0; i < 4; i++) c.quadraticCurveTo(141 - i * 4, 78, 137 - i * 4, 70);
-  c.lineTo(112, 52); c.closePath(); c.fillStyle = cap; c.fill(); c.lineWidth = 2; c.strokeStyle = goldGrad(c, 108, 20, 146, 76); c.stroke();
-  c.save(); c.shadowColor = '#ffe9a0'; c.shadowBlur = 4; c.fillStyle = '#fff1b8';
-  [[126, 30], [134, 38], [118, 38], [138, 50], [130, 48], [140, 62], [132, 60]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.5, 0, TAU); c.fill(); });
+  // trunk: its own volume, lit along the front edge, ringed with creases, tip curled forward
+  const trunk = new Path2D();
+  trunk.moveTo(133, 46); trunk.bezierCurveTo(141, 44, 148, 46, 147, 56); trunk.bezierCurveTo(147, 72, 153, 86, 151, 99);
+  trunk.bezierCurveTo(150, 106, 141, 108, 139, 101); trunk.bezierCurveTo(142, 97, 142, 86, 138, 76); trunk.bezierCurveTo(135, 68, 131, 62, 131, 56); trunk.closePath();
+  const tk = c.createLinearGradient(131, 0, 152, 0); tk.addColorStop(0, '#4e474b'); tk.addColorStop(.55, '#8a8186'); tk.addColorStop(1, '#b1a8ad');
+  c.fillStyle = tk; c.fill(trunk);
+  c.save(); c.clip(trunk); c.strokeStyle = 'rgba(30,22,26,.42)'; c.lineWidth = .8;
+  for (let k = 0; k < 16; k++) { const y = 52 + k * 3.2; c.beginPath(); c.moveTo(128, y + 2); c.quadraticCurveTo(142, y - 1.5, 156, y + 1); c.stroke(); }
+  c.strokeStyle = 'rgba(255,236,210,.35)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(147, 58); c.bezierCurveTo(147, 74, 152, 86, 150, 99); c.stroke();
   c.restore();
-  c.fillStyle = '#fff'; c.beginPath(); c.ellipse(124, 50, 3.4, 2.4, 0, 0, TAU); c.fill();
-  c.fillStyle = '#111'; c.beginPath(); c.arc(125, 50, 1.6, 0, TAU); c.fill();
+  // ear (small, Asian elephant)
+  const ear = new Path2D(); ear.moveTo(119, 30); ear.bezierCurveTo(108, 32, 103, 50, 107, 62); ear.bezierCurveTo(111, 73, 124, 71, 127, 60); ear.bezierCurveTo(129, 47, 127, 35, 119, 30);
+  const eg = c.createLinearGradient(104, 30, 128, 70); eg.addColorStop(0, '#8a8186'); eg.addColorStop(1, '#433c40');
+  c.fillStyle = eg; c.fill(ear); c.strokeStyle = 'rgba(255,225,180,.45)'; c.lineWidth = 1.2; c.stroke(ear);
+  c.strokeStyle = 'rgba(30,22,26,.35)'; c.lineWidth = .8;
+  for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(112 + k * 2, 38 + k * 2); c.quadraticCurveTo(110 + k * 3, 52, 116 + k * 2, 64 - k); c.stroke(); }
+  // eye with lid creases
+  c.fillStyle = '#1a1416'; c.beginPath(); c.ellipse(137, 36, 2.6, 1.7, -.2, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(136.3, 35.4, .7, 0, TAU); c.fill();
+  c.strokeStyle = 'rgba(25,18,22,.5)'; c.lineWidth = .7;
+  for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(137, 37, 4 + k * 1.6, Math.PI * 1.05, Math.PI * 1.9); c.stroke(); }
   // tusk
-  const iv = c.createLinearGradient(130, 60, 162, 80); iv.addColorStop(0, '#fffaf0'); iv.addColorStop(1, '#d8c9a4');
-  c.beginPath(); c.moveTo(130, 62); c.quadraticCurveTo(140, 88, 164, 76); c.quadraticCurveTo(144, 80, 137, 58); c.closePath(); c.fillStyle = iv; c.fill();
-  c.strokeStyle = 'rgba(90,70,40,.5)'; c.lineWidth = 1; c.stroke();
-  // gem crown
-  c.fillStyle = goldGrad(c, 112, 10, 138, 30); poly(c, [[112, 30], [114, 15], [119, 23], [125, 10], [131, 23], [136, 15], [138, 30]]); c.fill();
-  c.fillStyle = '#2258e6'; c.beginPath(); c.arc(125, 25, 3, 0, TAU); c.fill();
+  const tusk = new Path2D(); tusk.moveTo(133, 63); tusk.quadraticCurveTo(140, 82, 157, 80); tusk.quadraticCurveTo(146, 76, 139, 61); tusk.closePath();
+  const iv = c.createLinearGradient(133, 62, 156, 82); iv.addColorStop(0, '#d6c7a2'); iv.addColorStop(.5, '#fffaf0'); iv.addColorStop(1, '#e6d9b8');
+  c.fillStyle = iv; c.fill(tusk); c.strokeStyle = 'rgba(90,70,40,.45)'; c.lineWidth = .8; c.stroke(tusk);
+  c.strokeStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.moveTo(137, 66); c.quadraticCurveTo(142, 77, 152, 78.5); c.stroke();
+  // velvet saddle cloth draped over the back, gold border, gem medallion and tassels
+  const cloth = new Path2D(); cloth.moveTo(50, 31); cloth.bezierCurveTo(66, 25, 86, 24, 100, 29); cloth.lineTo(103, 70);
+  for (let x = 103; x > 50; x -= 6.6) cloth.quadraticCurveTo(x - 3.3, 76, x - 6.6, 70);
+  cloth.closePath();
+  const vel = c.createLinearGradient(0, 26, 0, 76); vel.addColorStop(0, '#d0184a'); vel.addColorStop(.55, '#8c0b2e'); vel.addColorStop(1, '#45041a');
+  c.save(); c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 6; c.shadowOffsetY = 3; c.fillStyle = vel; c.fill(cloth); c.restore();
+  c.save(); c.clip(cloth);
+  const sheen = c.createRadialGradient(70, 34, 2, 72, 40, 34); sheen.addColorStop(0, 'rgba(255,160,190,.45)'); sheen.addColorStop(1, 'rgba(255,160,190,0)');
+  c.fillStyle = sheen; c.fillRect(0, 0, 160, 140);
+  for (let i = 0; i < 9; i++) { c.strokeStyle = 'rgba(40,0,12,.22)'; c.lineWidth = 1; c.beginPath(); c.moveTo(54 + i * 6, 32); c.quadraticCurveTo(52 + i * 6.2, 52, 53 + i * 6.1, 72); c.stroke(); } // folds
   c.restore();
+  c.strokeStyle = metalGrad(c, 76, 50, .3); c.lineWidth = 2.6; c.stroke(cloth);
+  c.strokeStyle = 'rgba(255,220,130,.85)'; c.lineWidth = 1; c.beginPath(); c.moveTo(52, 64); for (let x = 52; x <= 101; x += 3) c.lineTo(x, 64 + Math.sin(x * .7) * .8); c.stroke();
+  for (let x = 56.5; x < 103; x += 6.6) { goldBead(c, x, 74.5, 1.9); c.fillStyle = '#e9b955'; c.fillRect(x - .6, 75.5, 1.2, 3); }
+  c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 3; goldBead(c, 76, 48, 7.5); c.restore();
+  const sg = c.createRadialGradient(74.5, 46.5, .5, 76, 48, 5); sg.addColorStop(0, '#bfe0ff'); sg.addColorStop(.5, '#2155d6'); sg.addColorStop(1, '#030c33');
+  c.fillStyle = sg; c.beginPath(); c.arc(76, 48, 5, 0, TAU); c.fill();
+  for (const [x, y] of [[62, 42], [90, 41], [62, 56], [90, 56]]) { goldBead(c, x, y, 2.6); c.fillStyle = '#c2102e'; c.beginPath(); c.arc(x, y, 1.5, 0, TAU); c.fill(); }
+  glint(c, 74, 46, 4, .9);
+  // gem crown on the head
+  c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 4; c.shadowOffsetY = 2;
+  c.fillStyle = metalGrad(c, 133, 12, 1.2); poly(c, [[122, 18], [123, 6], [128, 12], [133, 1], [138, 12], [143, 6], [144, 18]]); c.fill(); c.restore();
+  c.fillStyle = metalGrad(c, 133, 18, 2); c.beginPath(); c.roundRect(121, 15, 24, 5, 2); c.fill();
+  for (const [x, y, r] of [[123, 6, 1.6], [133, 1, 1.9], [143, 6, 1.6]]) goldBead(c, x, y, r);
+  const cg = c.createRadialGradient(132.3, 11.3, .3, 133, 12, 3.2); cg.addColorStop(0, '#ffd0d8'); cg.addColorStop(.5, '#c2102e'); cg.addColorStop(1, '#3a0310');
+  c.fillStyle = cg; c.beginPath(); c.arc(133, 12, 3, 0, TAU); c.fill();
+  for (const x of [126, 140]) { c.fillStyle = '#2155d6'; c.beginPath(); c.arc(x, 17.5, 1.4, 0, TAU); c.fill(); }
+  glint(c, 133, 11, 5, 1); glint(c, 40, 38, 3, .6);
   ribbon(c, 'WILD', 114, '#ffe38a', '#b8751a', '#3a1d00');
 }
 
+/* ---- Lion Rock (SCATTER): sunset medallion, lit cliff, lion-paw gate, jungle, polished gold ring */
 function drawLionRock(c) {
-  glowDisc(c, 80, 60, 76, 'rgba(255,190,90,A)', .6);
-  const sun = c.createRadialGradient(80, 30, 2, 80, 30, 34); sun.addColorStop(0, '#fff6c8'); sun.addColorStop(1, 'rgba(255,170,60,0)');
-  c.fillStyle = sun; c.beginPath(); c.arc(80, 30, 34, 0, TAU); c.fill();
-  // flat-topped rock fortress
-  const rock = c.createLinearGradient(24, 0, 136, 0); rock.addColorStop(0, '#5a2a14'); rock.addColorStop(.45, '#c8693c'); rock.addColorStop(1, '#4a1e0e');
-  c.fillStyle = rock; c.beginPath();
-  c.moveTo(20, 104); c.bezierCurveTo(28, 70, 34, 42, 50, 28); c.lineTo(112, 24); c.bezierCurveTo(126, 38, 132, 70, 140, 104); c.closePath(); c.fill();
-  c.strokeStyle = goldGrad(c, 50, 20, 112, 30); c.lineWidth = 2.2; c.beginPath(); c.moveTo(50, 28); c.lineTo(112, 24); c.stroke();
-  c.strokeStyle = 'rgba(40,15,5,.45)'; c.lineWidth = 1.2;
-  for (const y of [46, 62, 78]) { c.beginPath(); c.moveTo(36 - (y - 46) * .2, y); c.quadraticCurveTo(80, y + 4, 126 + (y - 46) * .2, y - 2); c.stroke(); }
-  // jungle canopy
-  c.fillStyle = '#1f6b3a'; for (let i = 0; i < 10; i++) { c.beginPath(); c.arc(8 + i * 16, 104 + (i % 2) * 3, 12, 0, TAU); c.fill(); }
-  c.fillStyle = '#2e8c4c'; for (let i = 0; i < 9; i++) { c.beginPath(); c.arc(14 + i * 16, 100, 8, 0, TAU); c.fill(); }
-  // stairway between the lion paws
-  c.fillStyle = '#ecdcb4'; for (let i = 0; i < 6; i++) c.fillRect(70 + i, 106 - i * 6, 20 - i * 2, 3);
-  [50, 110].forEach(px => {
-    const paw = c.createLinearGradient(px - 16, 70, px + 16, 108); paw.addColorStop(0, '#ffe9a0'); paw.addColorStop(1, '#b8751a');
-    c.fillStyle = paw; c.beginPath(); c.moveTo(px - 16, 108); c.lineTo(px - 14, 78); c.quadraticCurveTo(px, 68, px + 14, 78); c.lineTo(px + 16, 108); c.closePath(); c.fill();
-    c.strokeStyle = '#5a3208'; c.lineWidth = 1.5; c.stroke();
-    c.beginPath(); for (let k = -1; k <= 1; k++) { c.moveTo(px + k * 9, 90); c.lineTo(px + k * 9, 106); } c.stroke();
-    c.fillStyle = '#fffaf0'; for (let k = -1; k <= 1; k++) { poly(c, [[px + k * 9 - 3, 107], [px + k * 9, 113], [px + k * 9 + 3, 107]]); c.fill(); }
+  const cx = 80, cy = 58, R = 56, rnd = seeded(91);
+  glowDisc(c, cx, cy, 80, 'rgba(255,170,80,A)', .6);
+  c.save(); c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.clip();
+  const sky = c.createLinearGradient(0, 0, 0, 116);
+  [['#24113f', 0], ['#7c2f5a', .35], ['#e2694a', .62], ['#ffc36e', .82], ['#ffe7a8', 1]].forEach(([col, s]) => sky.addColorStop(s, col));
+  c.fillStyle = sky; c.fillRect(0, 0, 160, 140);
+  const sun = c.createRadialGradient(118, 74, 2, 118, 74, 40); sun.addColorStop(0, 'rgba(255,250,220,1)'); sun.addColorStop(.25, 'rgba(255,214,140,.7)'); sun.addColorStop(1, 'rgba(255,170,90,0)');
+  c.fillStyle = sun; c.fillRect(0, 0, 160, 140);
+  c.fillStyle = 'rgba(255,240,220,.6)'; for (let i = 0; i < 14; i++) c.fillRect(rnd() * 160, rnd() * 26 + 4, 1, 1); // first stars
+  c.fillStyle = 'rgba(90,50,100,.55)'; c.beginPath(); c.moveTo(0, 92);
+  for (let x = 0; x <= 160; x += 10) c.lineTo(x, 84 - Math.abs(Math.sin(x * .05)) * 9 - rnd() * 3); c.lineTo(160, 140); c.lineTo(0, 140); c.fill();
+  const rock = new Path2D();
+  rock.moveTo(34, 100); rock.bezierCurveTo(37, 86, 36, 72, 40, 62); rock.lineTo(43, 60); rock.bezierCurveTo(42, 50, 44, 40, 49, 33); // west face, overhang
+  rock.bezierCurveTo(54, 25, 66, 21, 80, 20); rock.bezierCurveTo(94, 20, 104, 22, 110, 28); // domed summit
+  rock.bezierCurveTo(115, 34, 115, 42, 116, 48); rock.lineTo(118, 50); rock.bezierCurveTo(119, 64, 122, 80, 127, 100); rock.closePath();
+  const rg = c.createLinearGradient(36, 0, 125, 0);
+  rg.addColorStop(0, '#3e170c'); rg.addColorStop(.3, '#7c3a1f'); rg.addColorStop(.7, '#c86c38'); rg.addColorStop(1, '#f2a462');
+  c.fillStyle = rg; c.fill(rock);
+  c.save(); c.clip(rock);
+  c.filter = 'blur(2.5px)'; // mottled weathering
+  for (let i = 0; i < 34; i++) { c.fillStyle = rnd() < .55 ? `rgba(50,15,4,${.18 + rnd() * .22})` : `rgba(255,200,140,${.12 + rnd() * .16})`; c.beginPath(); c.ellipse(40 + rnd() * 84, 28 + rnd() * 70, 4 + rnd() * 10, 3 + rnd() * 7, rnd() * 3, 0, TAU); c.fill(); }
+  c.fillStyle = 'rgba(30,8,0,.45)'; c.beginPath(); c.ellipse(60, 58, 18, 5, -.08, 0, TAU); c.fill(); // overhang gallery in shadow
+  c.filter = 'none';
+  for (let i = 0; i < 4; i++) { const y = 40 + i * 14 + rnd() * 5; c.strokeStyle = 'rgba(40,10,0,.16)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(38, y + rnd() * 4); c.bezierCurveTo(60, y - 3, 92, y + 5, 124, y - 2 + rnd() * 4); c.stroke(); }
+  for (let i = 0; i < 22; i++) { const x = 44 + rnd() * 76, y = 26 + rnd() * 30, l = 10 + rnd() * 40; c.strokeStyle = `rgba(30,8,0,${.06 + rnd() * .14})`; c.lineWidth = .4 + rnd() * 1.1;
+    c.beginPath(); c.moveTo(x, y); c.bezierCurveTo(x + (rnd() - .5) * 4, y + l * .3, x + (rnd() - .5) * 4, y + l * .7, x + (rnd() - .5) * 5, y + l); c.stroke(); } // rain streaks
+  for (let i = 0; i < 320; i++) { c.fillStyle = rnd() < .5 ? 'rgba(0,0,0,.1)' : 'rgba(255,220,180,.08)'; c.fillRect(36 + rnd() * 90, 24 + rnd() * 76, 1, 1); }
+  const shade = c.createLinearGradient(36, 0, 66, 0); shade.addColorStop(0, 'rgba(15,4,0,.5)'); shade.addColorStop(1, 'rgba(15,4,0,0)');
+  c.fillStyle = shade; c.fillRect(0, 0, 160, 140);
+  c.restore();
+  c.strokeStyle = 'rgba(255,226,170,.85)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(96, 21); c.bezierCurveTo(104, 22, 113, 30, 116, 48); c.lineTo(118, 50); c.bezierCurveTo(119, 64, 122, 80, 127, 100); c.stroke();
+  for (let x = 54; x <= 108; x += 4.5) { // summit trees following the dome
+    const r = 3 + rnd() * 2.5, g = c.createRadialGradient(x + 1, 22 - r, .5, x, 24 - r * .4, r * 1.3); g.addColorStop(0, '#6aa85a'); g.addColorStop(1, '#173a1f');
+    const top = 20 + Math.pow((x - 80) / 30, 2) * 7; c.fillStyle = g; c.beginPath(); c.arc(x, top + 1 - r * .5, r, 0, TAU); c.fill();
+  }
+  // brick platform, stairway and the giant lion paws
+  c.fillStyle = '#5e2614'; c.fillRect(46, 88, 68, 14);
+  for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#ead6ab' : '#c9b083'; c.fillRect(74 + i * .7, 101 - i * 3.4, 12 - i * 1.4, 2.4); }
+  [[60, -1], [100, 1]].forEach(([px, s]) => { // each paw: a brick forefoot with three toes and pale claws
+    const pg = c.createLinearGradient(px - 16, 72, px + 16, 104); pg.addColorStop(0, s < 0 ? '#9a4c28' : '#e28d52'); pg.addColorStop(1, '#4a1c0c');
+    c.save(); c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 4; c.shadowOffsetY = 2;
+    c.fillStyle = pg; c.beginPath(); c.moveTo(px - 16, 103); c.lineTo(px - 15, 82); c.quadraticCurveTo(px, 70, px + 15, 82); c.lineTo(px + 16, 103); c.closePath(); c.fill(); c.restore();
+    c.strokeStyle = 'rgba(40,12,0,.25)'; c.lineWidth = .6; for (let y = 80; y < 103; y += 3) { c.beginPath(); c.moveTo(px - 15, y); c.lineTo(px + 15, y); c.stroke(); } // brick courses
+    for (let k = -1; k <= 1; k++) {
+      const tx = px + k * 9.5, tg = c.createRadialGradient(tx + s, 93, .5, tx, 96, 7); tg.addColorStop(0, '#f0a46a'); tg.addColorStop(1, '#6a2a14');
+      c.fillStyle = tg; c.beginPath(); c.ellipse(tx, 96, 5, 7.5, 0, 0, TAU); c.fill();
+      const cl = c.createLinearGradient(tx - 2, 101, tx + 2, 108); cl.addColorStop(0, '#fffaf0'); cl.addColorStop(1, '#b8a68a');
+      c.fillStyle = cl; c.beginPath(); c.moveTo(tx - 2.4, 101); c.quadraticCurveTo(tx + .5, 103, tx + .4, 109); c.quadraticCurveTo(tx + 2, 104, tx + 2.4, 101); c.fill();
+    }
+    c.strokeStyle = 'rgba(255,220,170,.6)'; c.lineWidth = .9; c.beginPath(); c.moveTo(px - 15, 82); c.quadraticCurveTo(px, 70, px + 15, 82); c.stroke();
   });
-  sparkle(c, 112, 18, 7, .9); sparkle(c, 40, 38, 4, .7);
+  // jungle in front: back canopy, front canopy with sunlit tops, two palms
+  for (const [y, dark, lite, n] of [[104, '#173a24', '#2f6b3a', 12], [112, '#1f4a28', '#58a050', 14]]) {
+    for (let i = 0; i < n; i++) {
+      const x = i * (160 / (n - 1)) + (rnd() - .5) * 6, r = 7 + rnd() * 5, g = c.createRadialGradient(x + 2, y - r * .6, 1, x, y, r * 1.2);
+      g.addColorStop(0, lite); g.addColorStop(1, dark); c.fillStyle = g; c.beginPath(); c.arc(x, y + (i % 2) * 2, r, 0, TAU); c.fill();
+    }
+  }
+  [[28, 1], [134, -1]].forEach(([px, d]) => {
+    c.strokeStyle = '#1a2a14'; c.lineWidth = 2; c.beginPath(); c.moveTo(px, 110); c.quadraticCurveTo(px + d * 4, 86, px + d * 10, 72); c.stroke();
+    c.fillStyle = '#1d3a1c';
+    for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k - 2.5) * .55, hx = px + d * 10, hy = 72;
+      c.beginPath(); c.moveTo(hx, hy); c.quadraticCurveTo(hx + Math.cos(a) * 10, hy + Math.sin(a) * 8 - 3, hx + Math.cos(a) * 18, hy + Math.sin(a) * 6 + 7); c.quadraticCurveTo(hx + Math.cos(a) * 9, hy + Math.sin(a) * 8 + 1, hx, hy + 1); c.fill(); }
+  });
+  const haze = c.createLinearGradient(0, 70, 0, 116); haze.addColorStop(0, 'rgba(255,190,120,0)'); haze.addColorStop(1, 'rgba(255,190,120,.22)');
+  c.fillStyle = haze; c.fillRect(0, 0, 160, 140);
+  const vig = c.createRadialGradient(cx, cy, R * .55, cx, cy, R); vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(10,0,20,.45)');
+  c.fillStyle = vig; c.fillRect(0, 0, 160, 140);
+  c.restore();
+  // polished gold ring with a sapphire keystone
+  c.save(); c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 8; c.shadowOffsetY = 3;
+  c.strokeStyle = metalGrad(c, cx, cy, .4); c.lineWidth = 7; c.beginPath(); c.arc(cx, cy, R + 2.5, 0, TAU); c.stroke(); c.restore();
+  c.strokeStyle = 'rgba(60,30,0,.7)'; c.lineWidth = 1; c.beginPath(); c.arc(cx, cy, R - 1, 0, TAU); c.stroke();
+  c.strokeStyle = 'rgba(255,248,210,.8)'; c.beginPath(); c.arc(cx, cy, R + 5.6, Math.PI * 1.05, Math.PI * 1.7); c.stroke();
+  goldBead(c, cx, cy - R - 2.5, 6);
+  const kg = c.createRadialGradient(cx - 1.2, cy - R - 4, .4, cx, cy - R - 2.5, 4.2); kg.addColorStop(0, '#cfe6ff'); kg.addColorStop(.5, '#2155d6'); kg.addColorStop(1, '#030c33');
+  c.fillStyle = kg; c.beginPath(); c.arc(cx, cy - R - 2.5, 4, 0, TAU); c.fill();
+  glint(c, cx - 1, cy - R - 4, 4.5, 1); glint(c, 118, 74, 5, .7);
   ribbon(c, 'BONUS', 114, '#7b5cff', '#2b137a', '#ffe9a6');
 }
 
@@ -824,75 +1024,155 @@ function drawLeopard(c) {
   sparkle(c, cx + 34, cy - 40, 6, .8);
 }
 
-function drawFaceted(c, cx, cy, rx, ry, n, rot, col) {
-  const P = (s, i, off = 0) => { const a = rot + (i + off) * TAU / n; return [cx + Math.cos(a) * rx * s, cy + Math.sin(a) * ry * s]; };
-  const LA = -Math.PI * .72;
-  c.save(); c.shadowColor = 'rgba(0,0,0,.55)'; c.shadowBlur = 12; c.shadowOffsetY = 6;
-  poly(c, Array.from({ length: n }, (_, i) => P(1.07, i))); c.fillStyle = goldGrad(c, cx - rx, cy - ry, cx + rx, cy + ry); c.fill();
-  c.restore();
-  const offs = [.12, -.08, .3, -.2];
-  for (let i = 0; i < n; i++) {
-    const o0 = P(1, i), o1 = P(1, i + 1), t0 = P(.52, i), t1 = P(.52, i + 1), m = P(.8, i, .5);
-    const tris = [[o0, o1, m], [o1, t1, m], [t1, t0, m], [t0, o0, m]];
-    tris.forEach((tri, k) => {
-      const gx = (tri[0][0] + tri[1][0] + tri[2][0]) / 3 - cx, gy = (tri[0][1] + tri[1][1] + tri[2][1]) / 3 - cy;
-      const s = .5 + .5 * Math.cos(Math.atan2(gy, gx) - LA);
-      poly(c, tri); c.fillStyle = mix(col.dark, col.light, s * .85 + offs[k] + (i % 2 ? .06 : -.04)); c.fill();
-      c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = .8; c.stroke();
-    });
+/* ---- Faceted oval brilliant: table, star, kite and upper-girdle facets. Brightness mixes a key light with a
+   per-facet scramble (internal reflections), which is what makes a real gem scintillate. */
+function drawBrilliant(c, cx, cy, rx, ry, col, seed) {
+  const A = i => -Math.PI / 2 + i * Math.PI / 8, P = (r, a) => [cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r];
+  bezelSetting(c, cx, cy, rx, ry, 0);
+  const table = Array.from({ length: 8 }, (_, i) => P(.5, A(i * 2)));
+  const star = Array.from({ length: 8 }, (_, i) => P(.76, A(i * 2 + 1)));
+  const gird = Array.from({ length: 16 }, (_, i) => P(1, A(i)));
+  const facets = [];
+  for (let i = 0; i < 8; i++) {
+    const j = (i + 1) % 8, h = (i + 7) % 8;
+    facets.push({ pts: [table[i], table[j], star[i]], tilt: .3 });
+    facets.push({ pts: [table[i], star[h], gird[i * 2], star[i]], tilt: .6 });
+    facets.push({ pts: [star[i], gird[i * 2], gird[i * 2 + 1]], tilt: .9 });
+    facets.push({ pts: [star[i], gird[i * 2 + 1], gird[(i * 2 + 2) % 16]], tilt: .9 });
   }
-  const tb = Array.from({ length: n }, (_, i) => P(.52, i));
+  facets.forEach((f, k) => {
+    const gx = f.pts.reduce((a, p) => a + p[0], 0) / f.pts.length, gy = f.pts.reduce((a, p) => a + p[1], 0) / f.pts.length;
+    const ang = Math.atan2((gy - cy) / ry, (gx - cx) / rx);
+    const lambert = clamp(.5 - (Math.cos(ang) * .55 + Math.sin(ang) * .7) * f.tilt * .8, 0, 1);
+    const s = clamp(lambert * .6 + hash(k + seed) * .62 - .12, 0, 1);
+    const g = c.createLinearGradient(f.pts[0][0], f.pts[0][1], gx * 2 - f.pts[0][0], gy * 2 - f.pts[0][1]);
+    g.addColorStop(0, mix(col.deep, col.light, Math.pow(s, 1.3)));
+    g.addColorStop(1, mix(col.deep, col.base, s * .85 + .1));
+    poly(c, f.pts); c.fillStyle = g; c.fill();
+    c.strokeStyle = `rgba(255,255,255,${.1 + s * .3})`; c.lineWidth = .6; c.stroke();
+  });
+  // table: pavilion "arrows" seen through it, then a soft window reflection
+  c.save(); poly(c, table); c.clip();
   const tg = c.createLinearGradient(cx - rx * .5, cy - ry * .5, cx + rx * .5, cy + ry * .5);
-  tg.addColorStop(0, col.light); tg.addColorStop(.55, col.base); tg.addColorStop(1, col.dark);
-  poly(c, tb); c.fillStyle = tg; c.globalAlpha = .85; c.fill(); c.globalAlpha = 1;
-  c.strokeStyle = 'rgba(255,255,255,.35)'; c.stroke();
-  poly(c, Array.from({ length: n }, (_, i) => P(1, i))); c.lineWidth = 2; c.strokeStyle = col.dark; c.stroke();
-  for (let i = 0; i < n; i += n / 4) { const [x, y] = P(1.03, i); c.fillStyle = goldGrad(c, x - 4, y - 4, x + 4, y + 4); c.beginPath(); c.arc(x, y, 4, 0, TAU); c.fill(); }
-  c.save(); c.globalAlpha = .55; c.fillStyle = '#fff'; c.beginPath(); c.ellipse(cx - rx * .25, cy - ry * .28, rx * .16, ry * .07, -.6, 0, TAU); c.fill(); c.restore();
-  sparkle(c, cx - rx * .42, cy - ry * .5, 10, .95);
-  sparkle(c, cx + rx * .4, cy + ry * .3, 5, .6);
-}
-const drawSapphire = c => { glowDisc(c, 80, 70, 74, 'rgba(70,140,255,A)', .45); drawFaceted(c, 80, 70, 48, 56, 8, -Math.PI / 2 + Math.PI / 8, { light: '#a9d8ff', base: '#2258e6', dark: '#061758' }); };
-const drawRuby = c => { glowDisc(c, 80, 70, 74, 'rgba(255,40,80,A)', .45); drawFaceted(c, 80, 70, 54, 52, 12, -Math.PI / 2, { light: '#ffa0ae', base: '#d4142f', dark: '#3f000b' }); };
-
-function drawCatsEye(c) {
-  const cx = 80, cy = 70;
-  glowDisc(c, cx, cy, 74, 'rgba(210,230,90,A)', .4);
-  c.save(); c.shadowColor = 'rgba(0,0,0,.55)'; c.shadowBlur = 12; c.shadowOffsetY = 6;
-  c.fillStyle = goldGrad(c, cx - 50, cy - 58, cx + 50, cy + 58); c.beginPath(); c.ellipse(cx, cy, 50, 58, 0, 0, TAU); c.fill(); c.restore();
-  c.fillStyle = '#fff1b0';
-  for (let i = 0; i < 22; i++) { const a = i / 22 * TAU; c.beginPath(); c.arc(cx + Math.cos(a) * 46.5, cy + Math.sin(a) * 54.5, 1.9, 0, TAU); c.fill(); }
-  const g = c.createRadialGradient(cx - 10, cy - 14, 4, cx, cy, 52);
-  g.addColorStop(0, '#fbffbe'); g.addColorStop(.3, '#d4d65e'); g.addColorStop(.68, '#878a22'); g.addColorStop(1, '#283006');
-  c.save(); c.beginPath(); c.ellipse(cx, cy, 41, 49, 0, 0, TAU); c.fillStyle = g; c.fill(); c.clip();
-  const band = (w, a) => { const b = c.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0); b.addColorStop(0, 'rgba(255,255,230,0)'); b.addColorStop(.5, `rgba(255,255,235,${a})`); b.addColorStop(1, 'rgba(255,255,230,0)'); c.fillStyle = b; c.fillRect(cx - w / 2, cy - 50, w, 100); };
-  band(44, .25); band(12, .95);
-  c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(cx - 16, cy - 24, 12, 7, -.6, 0, TAU); c.fill();
-  c.restore();
-  sparkle(c, cx + 18, cy - 30, 8, .9);
-}
-
-function drawMoonstone(c) {
-  const cx = 80, cy = 70;
-  glowDisc(c, cx, cy, 76, 'rgba(150,200,255,A)', .45);
-  c.save(); c.shadowColor = 'rgba(0,0,0,.55)'; c.shadowBlur = 12; c.shadowOffsetY = 6;
-  c.fillStyle = goldGrad(c, cx - 54, cy - 48, cx + 54, cy + 48); c.beginPath(); c.ellipse(cx, cy, 54, 48, 0, 0, TAU); c.fill(); c.restore();
-  for (let i = 0; i < 8; i++) { // prongs
-    const a = i / 8 * TAU + TAU / 16, x = cx + Math.cos(a) * 50, y = cy + Math.sin(a) * 44;
-    c.fillStyle = goldGrad(c, x - 5, y - 5, x + 5, y + 5); c.beginPath(); c.arc(x, y, 5, 0, TAU); c.fill();
+  tg.addColorStop(0, mix(col.base, col.light, .6)); tg.addColorStop(.55, col.base); tg.addColorStop(1, col.deep);
+  c.fillStyle = tg; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+  for (let i = 0; i < 16; i++) {
+    poly(c, [[cx, cy], P(.6, A(i)), P(.6, A(i + 1))]);
+    c.fillStyle = i % 2 ? `rgba(0,0,20,${.18 + hash(i + seed * 3) * .2})` : `rgba(255,255,255,${.05 + hash(i + seed) * .12})`; c.fill();
   }
-  const body = c.createRadialGradient(cx - 12, cy - 14, 4, cx, cy, 48); body.addColorStop(0, '#ffffff'); body.addColorStop(.45, '#e4e8f2'); body.addColorStop(1, '#8f98b0');
-  c.save(); c.beginPath(); c.ellipse(cx, cy, 45, 39, 0, 0, TAU); c.fillStyle = body; c.fill(); c.clip();
-  c.globalCompositeOperation = 'source-over'; // blue adularescence
-  const g1 = c.createRadialGradient(cx + 8, cy - 10, 2, cx + 8, cy - 10, 34); g1.addColorStop(0, 'rgba(110,180,255,.75)'); g1.addColorStop(.5, 'rgba(70,130,255,.35)'); g1.addColorStop(1, 'rgba(60,100,255,0)');
-  c.fillStyle = g1; c.fillRect(0, 0, 160, 140);
-  const g2 = c.createRadialGradient(cx - 18, cy + 14, 2, cx - 18, cy + 14, 24); g2.addColorStop(0, 'rgba(190,150,255,.6)'); g2.addColorStop(1, 'rgba(190,150,255,0)');
-  c.fillStyle = g2; c.fillRect(0, 0, 160, 140);
-  c.globalCompositeOperation = 'source-over';
-  c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(cx - 16, cy - 20, 14, 7, -.5, 0, TAU); c.fill();
+  const win = c.createLinearGradient(cx - rx * .4, cy - ry * .45, cx + rx * .1, cy - ry * .05);
+  win.addColorStop(0, 'rgba(255,255,255,0)'); win.addColorStop(.45, 'rgba(255,255,255,.5)'); win.addColorStop(.6, 'rgba(255,255,255,.08)'); win.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = win; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
   c.restore();
-  c.lineWidth = 1.5; c.strokeStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(cx, cy, 45, 39, 0, 0, TAU); c.stroke();
-  sparkle(c, cx + 22, cy - 24, 8, .9); sparkle(c, cx - 28, cy + 18, 4, .6);
+  poly(c, table); c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = .8; c.stroke();
+  // dispersion "fire": small spectral flecks
+  c.save(); c.globalCompositeOperation = 'lighter';
+  ['rgba(255,70,90,.26)', 'rgba(80,255,170,.22)', 'rgba(255,220,80,.26)', 'rgba(150,120,255,.26)', 'rgba(255,140,40,.22)'].forEach((fc, i) => {
+    const f = facets[Math.floor(hash(i * 7 + seed) * facets.length)]; c.fillStyle = fc; poly(c, f.pts); c.fill();
+  });
+  c.restore();
+  // edge absorption darkens the girdle like a real stone
+  c.save(); c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, TAU); c.clip();
+  const edge = c.createRadialGradient(cx, cy, Math.min(rx, ry) * .65, cx, cy, Math.max(rx, ry)); edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, 'rgba(0,0,10,.4)');
+  c.fillStyle = edge; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2); c.restore();
+  for (const a of [Math.PI * .25, Math.PI * .75, Math.PI * 1.25, Math.PI * 1.75]) { // claw prongs
+    const [x, y] = P(1.02, a);
+    c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 3; c.shadowOffsetY = 1.5; goldBead(c, x, y, 4.6); c.restore();
+  }
+  glint(c, cx - rx * .3, cy - ry * .42, 9, 1); glint(c, cx + rx * .42, cy + ry * .18, 5, .8); glint(c, cx - rx * .55, cy + ry * .5, 3.5, .6);
+}
+
+/* ---- Cabochon: smooth dome. Light enters top-left and glows out lower-right; the rim darkens; a crisp window
+   reflection and a refracted rim light sell the curvature. `inner` paints the optical effect inside the dome. */
+function drawCabochon(c, cx, cy, rx, ry, col, inner, beads = 30) {
+  bezelSetting(c, cx, cy, rx, ry, beads);
+  c.save(); c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, TAU); c.clip();
+  const body = c.createRadialGradient(cx + rx * .22, cy + ry * .32, 2, cx, cy, Math.max(rx, ry) * 1.05);
+  body.addColorStop(0, col.glow); body.addColorStop(.48, col.base); body.addColorStop(1, col.deep);
+  c.fillStyle = body; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+  inner(c);
+  const rim = c.createRadialGradient(cx - rx * .1, cy - ry * .1, Math.min(rx, ry) * .6, cx, cy, Math.max(rx, ry) * 1.02);
+  rim.addColorStop(0, 'rgba(0,0,0,0)'); rim.addColorStop(1, `rgba(0,0,0,${col.rim ?? .5})`);
+  c.fillStyle = rim; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+  const cres = new Path2D(); // curved gloss crescent that hugs the dome
+  cres.ellipse(cx - rx * .06, cy - ry * .08, rx * .8, ry * .78, 0, Math.PI * 1.08, Math.PI * 1.62);
+  cres.ellipse(cx + rx * .06, cy + ry * .1, rx * .78, ry * .76, 0, Math.PI * 1.55, Math.PI * 1.12, true); cres.closePath();
+  const cg = c.createLinearGradient(cx - rx * .7, cy - ry * .7, cx - rx * .1, cy - ry * .1); cg.addColorStop(0, 'rgba(255,255,255,.75)'); cg.addColorStop(1, 'rgba(255,255,255,.05)');
+  c.fillStyle = cg; c.fill(cres);
+  const soft = c.createRadialGradient(cx - rx * .3, cy - ry * .38, 1, cx - rx * .3, cy - ry * .38, rx * .55);
+  soft.addColorStop(0, 'rgba(255,255,255,.28)'); soft.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = soft; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+  c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 2.2; c.filter = 'blur(1px)';
+  c.beginPath(); c.ellipse(cx, cy, rx * .9, ry * .9, 0, Math.PI * .05, Math.PI * .6); c.stroke(); c.filter = 'none';
+  c.restore();
+  c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 1; c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, TAU); c.stroke();
+}
+
+const drawSapphire = c => {
+  glowDisc(c, 80, 68, 76, 'rgba(70,140,255,A)', .5);
+  drawBrilliant(c, 80, 68, 44, 54, { light: '#d4ecff', base: '#2155d6', deep: '#020a2e' }, 3);
+};
+
+function drawRuby(c) { // star ruby: deep red cabochon with silk and a six-rayed star
+  const cx = 80, cy = 68, rx = 50, ry = 46;
+  glowDisc(c, cx, cy, 78, 'rgba(255,40,80,A)', .5);
+  drawCabochon(c, cx, cy, rx, ry, { glow: '#ff5a70', base: '#b00c28', deep: '#2e020b' }, c => {
+    c.strokeStyle = 'rgba(255,190,205,.028)'; c.lineWidth = .5; // rutile silk
+    for (const a of [0, Math.PI / 3, -Math.PI / 3]) for (let k = -26; k <= 26; k++) {
+      const ox = Math.cos(a + Math.PI / 2) * k * 2.2, oy = Math.sin(a + Math.PI / 2) * k * 2.2;
+      c.beginPath(); c.moveTo(cx + ox - Math.cos(a) * 70, cy + oy - Math.sin(a) * 70); c.lineTo(cx + ox + Math.cos(a) * 70, cy + oy + Math.sin(a) * 70); c.stroke();
+    }
+    const sx = cx - 5, sy = cy - 8; // the star sits under the light
+    c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+    for (const a of [Math.PI / 2, Math.PI / 6, -Math.PI / 6]) for (const [w, al] of [[6, .16], [2.2, .55], [.9, .9]]) {
+      const dx = Math.cos(a) * rx * 1.05, dy = Math.sin(a) * ry * 1.05, bend = 5;
+      const g = c.createLinearGradient(sx - dx, sy - dy, sx + dx, sy + dy);
+      g.addColorStop(0, 'rgba(255,220,230,0)'); g.addColorStop(.5, `rgba(255,236,242,${al})`); g.addColorStop(1, 'rgba(255,220,230,0)');
+      c.strokeStyle = g; c.lineWidth = w; c.beginPath(); c.moveTo(sx - dx, sy - dy);
+      c.quadraticCurveTo(sx - Math.sin(a) * bend, sy + Math.cos(a) * bend, sx + dx, sy + dy); c.stroke();
+    }
+    const bloom = c.createRadialGradient(sx, sy, 0, sx, sy, 16); bloom.addColorStop(0, 'rgba(255,240,245,.85)'); bloom.addColorStop(1, 'rgba(255,200,215,0)');
+    c.fillStyle = bloom; c.beginPath(); c.arc(sx, sy, 16, 0, TAU); c.fill(); c.restore();
+  });
+  glint(c, cx - 5, cy - 8, 7, .9);
+}
+
+function drawCatsEye(c) { // chrysoberyl cat's eye: honey-green dome with one sharp band of light
+  const cx = 80, cy = 68, rx = 42, ry = 52;
+  glowDisc(c, cx, cy, 76, 'rgba(210,230,90,A)', .45);
+  drawCabochon(c, cx, cy, rx, ry, { glow: '#f6ee9a', base: '#9c8f22', deep: '#2c2605' }, c => {
+    const milk = c.createLinearGradient(cx - rx, 0, cx + rx, 0); // milk-and-honey: the lit side turns milky
+    milk.addColorStop(0, 'rgba(255,250,215,.32)'); milk.addColorStop(.5, 'rgba(255,250,215,0)'); milk.addColorStop(1, 'rgba(60,40,0,.2)');
+    c.fillStyle = milk; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+    c.strokeStyle = 'rgba(255,255,220,.05)'; c.lineWidth = .6;
+    for (let y = cy - ry; y < cy + ry; y += 1.6) { c.beginPath(); c.moveTo(cx - rx, y); c.lineTo(cx + rx, y); c.stroke(); } // fibrous silk
+    c.save(); c.globalCompositeOperation = 'lighter';
+    for (const [w, al] of [[22, .14], [8, .32], [2.6, .95]]) {
+      const g = c.createLinearGradient(0, cy - ry, 0, cy + ry);
+      g.addColorStop(0, 'rgba(255,255,230,0)'); g.addColorStop(.35, `rgba(255,255,236,${al})`); g.addColorStop(.6, `rgba(255,255,236,${al})`); g.addColorStop(1, 'rgba(255,255,230,0)');
+      c.fillStyle = g; c.beginPath(); c.ellipse(cx + 3, cy, w / 2, ry, 0, 0, TAU); c.fill();
+    }
+    c.restore();
+  });
+  glint(c, cx + 3, cy - 14, 6, .9);
+}
+
+function drawMoonstone(c) { // milky adularia dome with a floating blue sheen
+  const cx = 80, cy = 68, rx = 50, ry = 44;
+  glowDisc(c, cx, cy, 78, 'rgba(150,200,255,A)', .5);
+  drawCabochon(c, cx, cy, rx, ry, { glow: '#eef1f8', base: '#b9c0d2', deep: '#4f5873', rim: .35 }, c => {
+    const veil = c.createLinearGradient(cx - rx, cy - ry, cx + rx, cy + ry); veil.addColorStop(0, 'rgba(255,255,255,.25)'); veil.addColorStop(1, 'rgba(120,130,160,.2)');
+    c.fillStyle = veil; c.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+    c.save(); c.filter = 'blur(4px)';
+    for (const [x, y, w, h, r, col] of [[cx + 8, cy - 4, 32, 17, -.4, 'rgba(40,110,255,.5)'], [cx + 4, cy + 2, 22, 10, -.2, 'rgba(70,160,255,.55)'],
+      [cx + 14, cy - 10, 14, 6, -.6, 'rgba(190,230,255,.7)'], [cx - 16, cy + 14, 14, 7, .3, 'rgba(120,100,255,.3)']]) {
+      c.fillStyle = col; c.beginPath(); c.ellipse(x, y, w, h, r, 0, TAU); c.fill();
+    }
+    c.filter = 'none'; c.restore();
+    c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = .7; // faint internal cleavage
+    for (const [x, y, l, a] of [[cx - 20, cy - 4, 14, .5], [cx + 10, cy + 16, 10, -.3], [cx - 4, cy + 22, 8, .9]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); c.stroke(); }
+  });
+  glint(c, cx + 18, cy - 20, 6, .8);
 }
 
 function drawNumber(c, txt, cols) {
@@ -939,7 +1219,8 @@ class Reel {
   constructor(i) { this.i = i; this.top = 0; this.offset = 0; this.state = 'idle'; this.speed = 0; this.vel = 0; this.over = new Map(); this.pop = [0, 0, 0]; this.antic = 0; }
   setStrip(strip, stop) { this.strip = strip; this.offset = stop; this.top = 0; this.over.clear(); }
   symAt(j) { if (this.over.has(j)) return this.over.get(j); const L = this.strip.length; return this.strip[(((j + this.offset) % L) + L) % L]; }
-  start(t, delay, vmax) { this.state = 'wait'; this.t0 = t + delay; this.vmax = vmax; this.top0 = this.top; this.pop = [0, 0, 0]; }
+  makeWild(t) { for (let r = 0; r < NROW; r++) { this.over.set(r, 'W'); this.pop[r] = t; } } // Elephant Stampede: full wild reel
+  start(t, delay, vmax) { this.over.clear(); this.state = 'wait'; this.t0 = t + delay; this.vmax = vmax; this.top0 = this.top; this.pop = [0, 0, 0]; }
   requestStop(stop, t, extra) {
     const F = Math.floor(this.top) - extra;
     const L = this.strip.length;
@@ -975,7 +1256,7 @@ class View {
   constructor(canvas, art) {
     this.cv = canvas; this.ctx = canvas.getContext('2d'); this.art = art;
     this.reels = Array.from({ length: NR }, (_, i) => new Reel(i));
-    this.particles = []; this.tweens = []; this.toasts = []; this.overlay = null;
+    this.particles = []; this.tweens = []; this.toasts = []; this.overlay = null; this.charges = []; this.quake = null;
     this.win = null; this.mode = 'base'; this.fsHud = null;
     this.t = 0; this.last = performance.now();
     this.buildStatic();
@@ -1138,8 +1419,11 @@ class View {
     // rAF pauses in hidden tabs; keep game logic ticking so an in-flight round always completes.
     setInterval(() => { const now = performance.now(); if (now - this.lastFrameAt > 250) this.step(now); }, 50);
   }
+  charge(r) { this.charges.push({ r, t0: this.t }); }
+  shake(dur, amp) { if (!this.reduced) this.quake = { t0: this.t, dur, amp }; }
   update(dt) {
     const t = this.t;
+    this.charges = this.charges.filter(ch => t - ch.t0 < 1.2);
     this.reels.forEach(r => r.update(t, dt));
     for (let i = this.tweens.length - 1; i >= 0; i--) {
       const tw = this.tweens[i]; tw.t += dt; const u = Math.min(1, tw.t / tw.dur); tw.fn(tw.ease(u));
@@ -1160,6 +1444,7 @@ class View {
   draw() {
     const c = this.ctx, t = this.t;
     c.setTransform(this.k, 0, 0, this.k, -this.ox * this.k, -this.oy * this.k);
+    if (this.quake) { const u = (t - this.quake.t0) / this.quake.dur; if (u >= 1) this.quake = null; else { const a = this.quake.amp * (1 - u); c.translate(rand(-a, a), rand(-a, a)); } }
     if (this.oy < 0) { c.fillStyle = this.mode === 'free' ? '#12040a' : '#060a1e'; c.fillRect(this.ox, this.oy, this.vw, -this.oy + 1); } // tall portrait: open sky above the stage
     c.drawImage(this.bg[this.mode], 0, 0, W, H);
     if (this.oy < 0) { const f = c.createLinearGradient(0, H - 70, 0, H); f.addColorStop(0, 'rgba(7,11,26,0)'); f.addColorStop(1, '#070b1a'); c.fillStyle = f; c.fillRect(this.ox, H - 70, this.vw, 70); }
@@ -1246,6 +1531,13 @@ class View {
       const sh = c.createLinearGradient(0, RY, 0, RY + SH * NROW);
       sh.addColorStop(0, 'rgba(0,0,0,.55)'); sh.addColorStop(.12, 'rgba(0,0,0,0)'); sh.addColorStop(.88, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.55)');
       c.fillStyle = sh; c.fillRect(x, RY, SW, SH * NROW);
+      for (const ch of this.charges) { // Elephant Stampede: an elephant charges down the reel on a gold column
+        if (ch.r !== reel.i) continue;
+        const u = (t - ch.t0) / .5, a = clamp(1 - Math.abs(u - .5) * 1.4, 0, 1);
+        const gc = c.createLinearGradient(x, 0, x + SW, 0); gc.addColorStop(0, 'rgba(255,200,90,0)'); gc.addColorStop(.5, `rgba(255,214,120,${.55 * a})`); gc.addColorStop(1, 'rgba(255,200,90,0)');
+        c.fillStyle = gc; c.fillRect(x, RY, SW, SH * NROW);
+        if (u < 1) { const y = RY - SH * 1.2 + Ease.inQuad(u) * (SH * NROW + SH * 1.4); c.drawImage(this.art.tex.W, x - 8, y, SW + 16, SH + 14); }
+      }
       c.restore();
       if (reel.antic) {
         const a = .55 + .35 * Math.sin(t * 14);
@@ -1392,34 +1684,34 @@ class Game {
     if (this.busy) this.skip(); else this.spin();
   }
 
-  async spin() {
-    if (this.busy) return;
-    if (this.bet > this.balance + 1e-9) { this.view.toast('INSUFFICIENT BALANCE', { size: 34, color: '#ff8a8a' }); this.stopAuto(); return; }
+  async spin(mode = 'base') {
+    if (this.busy || (mode !== 'base' && this.auto)) return;
+    if (this.bet * CFG.betModes[mode].cost > this.balance + 1e-9) { this.view.toast('INSUFFICIENT BALANCE', { size: 34, color: '#ff8a8a' }); this.stopAuto(); return; }
     if (this.auto) this.autoLeft--;
     this.busy = true; ui.update();
     const bet = this.bet;
     this.view.clearWins(); ui.setWin(0);
     let res;
-    try { res = await this.provider.play(bet); }
+    try { res = await this.provider.play(bet, mode); }
     catch (e) { console.error(e); this.view.toast('CONNECTION ERROR', { size: 34, color: '#ff8a8a' }); this.busy = false; ui.update(); return; }
     this.balance = res.balance; ui.update();
     try { await this.playBook(res.round.events, bet); }
     catch (e) { console.error('presentation error', e); }
     const end = await this.provider.endRound(bet, res.round);
     this.balance = end.balance;
-    this.record(res.round, bet);
+    this.record(res.round, bet, mode);
     this.busy = false;
     if (this.auto) this.checkAutoLimits(res.round.payoutMultiplier / 100 * bet);
     ui.update();
     if (this.auto) { await new Promise(r => setTimeout(r, this.turbo ? 150 : 450)); if (this.auto && !this.busy) this.spin(); }
   }
   // History and session totals are read from the finished book; the client never alters outcomes.
-  record(round, bet) {
-    const win = round.payoutMultiplier / 100 * bet;
+  record(round, bet, mode = 'base') {
+    const win = round.payoutMultiplier / 100 * bet, cost = bet * CFG.betModes[mode].cost;
     const fs = round.events.filter(e => e.type === 'reveal' && e.gameType === 'freegame').length;
-    this.history.unshift({ time: new Date(), bet, win, x: round.payoutMultiplier / 100, fs });
+    this.history.unshift({ time: new Date(), bet: cost, win, x: win / cost, fs, mode });
     if (this.history.length > 50) this.history.pop();
-    this.stats.rounds++; this.stats.bet += bet; this.stats.won += win;
+    this.stats.rounds++; this.stats.bet += cost; this.stats.won += win;
     ui.roundDone(win);
   }
   startAuto(cfg) {
@@ -1452,6 +1744,9 @@ class Game {
             await this.sleep(this.turbo ? .1 : .3);
           }
           await this.spinTo(ev);
+          break;
+        case 'elephantStampede':
+          await this.stampede(ev);
           break;
         case 'winInfo': {
           await this.presentWin(ev, bet, shown, inFs);
@@ -1517,6 +1812,19 @@ class Game {
     audio.spinLoop(false);
   }
 
+  async stampede(ev) {
+    this.skipping = false;
+    const v = this.view;
+    audio.stampede(); v.shake(1.1, 7);
+    v.toast('ELEPHANT STAMPEDE', { size: 56, dur: 1.8, y: 360 });
+    for (const r of ev.reels) {
+      v.charge(r);
+      await this.sleep(this.turbo ? .2 : .45);
+      v.reels[r].makeWild(v.t); audio.reelStop(r);
+      for (let row = 0; row < NROW; row++) { const [x, y] = v.cellCenter(r, row); v.burst(x, y, 10, 'gold'); }
+    }
+    await this.sleep(this.turbo ? .2 : .55);
+  }
   async presentWin(ev, bet, before, inFs) {
     this.skipping = false;
     const v = this.view, amt = ev.amount * bet, x = ev.amount;
@@ -1623,6 +1931,7 @@ const ui = {
     $('betDown').disabled = lock || game.betIdx === 0;
     $('betUp').disabled = lock || game.betIdx === BETS.length - 1;
     $('betVal').disabled = lock;
+    $('btnBuy').disabled = lock;
     const sp = $('spin');
     sp.classList.toggle('stop', game.busy && !game.auto); sp.classList.toggle('auto', game.auto);
     sp.setAttribute('aria-label', game.auto ? `Stop autoplay, ${game.autoLeft} spins left` : game.busy ? 'Skip animation' : 'Spin');
@@ -1674,6 +1983,29 @@ function selectTab(tab) {
   $('tab-' + tab).parentElement.scrollTop = 0;
 }
 
+const pct = x => `${(x * 100).toFixed(2)}%`;
+const buyModes = () => Object.entries(CFG.betModes).filter(([, c]) => c.buy);
+const buyText = (m, c) => c.multiplierStart ? `Gem Rush Free Spins with the Gem Multiplier starting at x${c.multiplierStart}.` : 'Gem Rush Free Spins right away, the same bonus as landing 3 or more Lion Rock scatters.';
+
+/* ---- Buy Gem Rush: pick a mode, then confirm the exact price */
+function renderBuy() {
+  const b = game.bet;
+  $('buyBody').innerHTML = `<div class="buycards">${buyModes().map(([m, c]) => {
+    const price = c.cost * b, ok = price <= game.balance + 1e-9;
+    return `<div class="bcard"><h3>${c.label}</h3><p>${buyText(m, c)}</p>
+      <div class="price">${fmt(price)}<small>FUN · ${c.cost}x bet</small></div>
+      <div class="note" style="margin:0">RTP ${pct(c.rtp)}</div>
+      <button class="cta" data-buy="${m}" ${ok ? '' : 'disabled'}>${ok ? `Buy for ${fmt(price)}` : 'Balance too low'}</button></div>`;
+  }).join('')}</div><p class="note">Prices follow your total bet (${fmt(b)} FUN). Change the bet to change the price.</p>`;
+}
+function renderBuyConfirm(m) {
+  const c = CFG.betModes[m], price = c.cost * game.bet;
+  $('buyBody').innerHTML = `<div class="confirm"><h3>Buy ${c.label}?</h3><div class="price">${fmt(price)} FUN</div>
+    <p class="note" style="margin-top:0">${buyText(m, c)} RTP ${pct(c.rtp)}.</p>
+    <div class="row2"><button class="ghost" data-back>Back</button><button class="cta" data-confirm="${m}" data-autofocus>Buy now</button></div></div>`;
+  $('buyBody').querySelector('[data-confirm]').focus();
+}
+
 let symbolArt = null;
 function renderPaytable() {
   const n = CFG.paylines.length, bet = game.bet;
@@ -1692,13 +2024,18 @@ function renderPaytable() {
       <li><b>Golden Elephant</b> is wild. It substitutes for every symbol except the Lion Rock scatter, and pays on its own.</li>
       <li>3, 4 or 5 <b>Lion Rock</b> scatters anywhere pay and award ${CFG.freeSpins.award[3]}, ${CFG.freeSpins.award[4]} or ${CFG.freeSpins.award[5]} <b>Gem Rush Free Spins</b>.</li>
       <li>In free spins every win is multiplied by the <b>Gem Multiplier</b>. It starts at x${CFG.freeSpins.multiplierStart} and grows by ${CFG.freeSpins.multiplierStep} after every winning spin, up to x${CFG.freeSpins.multiplierMax}. Free spins can retrigger.</li>
-      <li>The maximum win is <b>${CFG.maxWinMultiplier.toLocaleString('en-US')}x</b> the total bet. The round ends when it is reached.</li>
+      <li>On any base-game spin an <b>Elephant Stampede</b> can charge in (about 1 in ${Math.round(CFG.stampede.chance[1] / CFG.stampede.chance[0])} spins) and turn 1 to 3 of reels ${new Intl.ListFormat('en', { type: 'conjunction' }).format(CFG.stampede.reels.map(r => String(r + 1)))} fully wild. It never covers a Lion Rock scatter.</li>
+      <li>The maximum win is <b>${CFG.maxWinMultiplier.toLocaleString('en-US')}x</b> the base bet. The round ends when it is reached.</li>
+    </ul>
+    <h3>Buy Gem Rush</h3>
+    <ul>
+      ${buyModes().map(([m, c]) => `<li><b>${c.label}</b> costs ${c.cost}x the bet (${fmt(c.cost * bet)} FUN): ${buyText(m, c)} RTP ${pct(c.rtp)}.</li>`).join('')}
     </ul>
     <h3>Paylines (${n})</h3>
     <div class="pt-lines">${lines}</div>
     <h3>Rules</h3>
     <p>Wins pay left to right on adjacent reels, starting from the leftmost reel. Only the highest win per line is paid. Line wins are shown for the current total bet.
-    Theoretical RTP: 96.10% (prototype math, simulated). A malfunction voids all pays and plays.</p>`;
+    Theoretical RTP: ${pct(CFG.betModes.base.rtp)} for the base game${buyModes().map(([, c]) => `, ${pct(c.rtp)} for ${c.label}`).join('')}. A malfunction voids all pays and plays.</p>`;
 }
 
 const clock = d => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1707,7 +2044,7 @@ function renderHistory() {
   const s = game.stats, net = s.won - s.bet;
   const rows = game.history.map(r => `<tr><td>${clock(r.time)}</td><td class="num">${fmt(r.bet)}</td>
     <td class="num ${r.win > 0 ? 'pos' : ''}">${fmt(r.win)}</td>
-    <td>${r.fs ? `<span class="tag">Gem Rush · ${r.fs} spins</span> ` : ''}${r.win > 0 ? `${r.x.toFixed(2)}x` : 'No win'}</td></tr>`).join('');
+    <td>${r.mode && r.mode !== 'base' ? `<span class="tag">${CFG.betModes[r.mode].label}</span> ` : ''}${r.fs ? `<span class="tag">Gem Rush · ${r.fs} spins</span> ` : ''}${r.win > 0 ? `${r.x.toFixed(2)}x` : 'No win'}</td></tr>`).join('');
   $('tab-history').innerHTML = `
     <div class="summary">
       <div><span class="lbl">Rounds</span><b>${s.rounds}</b></div>
@@ -1798,6 +2135,13 @@ async function boot() {
     game.startAuto({ count: autoSel.count, loss: autoSel.loss * b, single: autoSel.single * b, feature: autoSel.feature });
   });
   $('btnTurbo').onclick = () => { click(); prefs.turbo = !prefs.turbo; savePrefs(); applyPrefs(); };
+  $('btnBuy').onclick = e => { click(); renderBuy(); modal.open('buySheet', e.currentTarget); };
+  $('buyBody').onclick = e => {
+    const pick = e.target.closest('[data-buy]'), back = e.target.closest('[data-back]'), go = e.target.closest('[data-confirm]');
+    if (pick) { click(); renderBuyConfirm(pick.dataset.buy); }
+    else if (back) { click(); renderBuy(); $('buyBody').querySelector('[data-buy]')?.focus(); }
+    else if (go) { click(); modal.close(); game.spin(go.dataset.confirm); }
+  };
   $('btnMute').onclick = () => { prefs.muted = !prefs.muted; savePrefs(); applyPrefs(); click(); };
   $('btnMenu').onclick = e => { click(); openMenu(menuTab, e.currentTarget); };
   document.querySelectorAll('.tab').forEach(tb => { tb.onclick = () => { click(); selectTab(tb.dataset.tab); }; });
