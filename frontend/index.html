@@ -1,0 +1,1487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lanka Tusker Treasures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Cinzel+Decorative:wght@700;900&family=Noto+Sans+Sinhala:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05070d;
+    --panel: rgba(17, 29, 40, .92);
+    --panel-line: #2a4152;
+    --text: #e8eef5;
+    --muted: #8aa0b4;
+    --accent: #1fd36b;
+    --gold: #f5c542;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  #wrap { position: fixed; inset: 0; display: grid; place-items: center; }
+  #game { position: relative; width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; }
+
+  #hud { position: absolute; left: 0; right: 0; bottom: 0; height: 17%; display: flex; align-items: center; justify-content: center;
+    gap: 1.1cqw; padding: 0 2cqw; background: linear-gradient(to bottom, transparent, rgba(4, 7, 14, .88) 45%); }
+  .stat { background: var(--panel); border: 1px solid var(--panel-line); border-radius: .8cqw; padding: .55cqw 1.1cqw; min-width: 12.5cqw; }
+  .stat label { display: block; font-size: .8cqw; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+  .stat b { font-size: 1.65cqw; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat small { font-size: .9cqw; color: var(--muted); margin-left: .3cqw; }
+  #win.flash { color: var(--gold); text-shadow: 0 0 1cqw rgba(245, 197, 66, .7); }
+  .betrow { display: flex; align-items: center; gap: .6cqw; }
+  .betrow b { min-width: 6cqw; text-align: center; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .sq { width: 2.3cqw; height: 2.3cqw; border-radius: .5cqw; background: #22384a; font-size: 1.4cqw; line-height: 1; display: grid; place-items: center; }
+  .sq:hover { background: #2d4a61; }
+  .sq:disabled { opacity: .35; cursor: default; }
+  .icon { width: 3.6cqw; height: 3.6cqw; border-radius: 50%; background: var(--panel); border: 1px solid var(--panel-line); font-size: 1.4cqw; font-weight: 800; font-family: Georgia, serif; }
+  .toggles { display: flex; gap: .6cqw; }
+  .tog { height: 3.6cqw; padding: 0 1.1cqw; border-radius: .7cqw; background: var(--panel); border: 1px solid var(--panel-line); font-size: .95cqw; font-weight: 800; letter-spacing: .08em; color: var(--muted); }
+  .tog.on { color: #04140a; background: var(--accent); border-color: var(--accent); }
+  #spin { width: 8cqw; height: 8cqw; border-radius: 50%; position: relative; margin: 0 .8cqw;
+    background: radial-gradient(circle at 35% 30%, #7dffb2 0%, #19c45d 45%, #0b7f3a 100%);
+    box-shadow: 0 0 0 .35cqw #0d2a1a, 0 0 0 .55cqw #39e783, 0 .6cqw 1.6cqw rgba(0, 0, 0, .6), inset 0 -.5cqw 1cqw rgba(0, 0, 0, .35);
+    transition: transform .12s ease, filter .2s; }
+  #spin:hover { filter: brightness(1.08); }
+  #spin:active { transform: scale(.94); }
+  #spin svg { width: 55%; height: 55%; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+  #spin.busy svg { animation: rot .55s linear infinite; }
+  #spin.stop { background: radial-gradient(circle at 35% 30%, #ffd77a 0%, #e9a51c 50%, #8a5a06 100%); box-shadow: 0 0 0 .35cqw #2a1d04, 0 0 0 .55cqw #ffcf4a, 0 .6cqw 1.6cqw rgba(0, 0, 0, .6); }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  .overlay { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(20, 10, 40, .82), rgba(2, 3, 8, .96)); z-index: 5; }
+  .overlay.hidden { display: none; }
+  #start .card { text-align: center; }
+  #start h1 { font-family: "Cinzel Decorative", Georgia, serif; font-size: 4.2cqw; margin: 0;
+    background: linear-gradient(180deg, #fff3c0, #f5c542 45%, #a8701f 70%, #ffe7a0); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 .3cqw .6cqw rgba(0, 0, 0, .7)); }
+  #start .si { font-family: "Noto Sans Sinhala", sans-serif; color: #f2d48a; font-size: 1.8cqw; margin: .4cqw 0 2.4cqw; }
+  #start button { font-size: 1.6cqw; font-weight: 800; letter-spacing: .15em; padding: 1.1cqw 3.4cqw; border-radius: 3cqw; color: #04140a;
+    background: linear-gradient(#5dffa0, #17b856); box-shadow: 0 0 2cqw rgba(31, 211, 107, .45); }
+  #start p { color: var(--muted); font-size: 1cqw; margin-top: 1.6cqw; }
+  #loading { color: var(--muted); font-size: 1.1cqw; letter-spacing: .1em; }
+
+  #paytable .sheet { width: 78cqw; max-height: 86%; overflow: auto; background: #0e1822; border: 1px solid var(--panel-line); border-radius: 1.2cqw; padding: 2cqw 2.4cqw; position: relative; }
+  #paytable h2 { font-family: "Cinzel", Georgia, serif; color: var(--gold); margin: 0 0 1cqw; font-size: 2cqw; }
+  #paytable h3 { font-family: "Cinzel", Georgia, serif; color: #f2d48a; font-size: 1.3cqw; margin: 1.8cqw 0 .6cqw; }
+  #paytable .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1cqw; }
+  #paytable .sym { background: #13222f; border: 1px solid #22384a; border-radius: .8cqw; padding: .6cqw; display: flex; gap: .8cqw; align-items: center; }
+  #paytable .sym img { width: 6.5cqw; height: auto; }
+  #paytable .sym .nm { font-size: .85cqw; color: var(--muted); margin-bottom: .2cqw; }
+  #paytable .sym div { font-size: 1cqw; line-height: 1.45; font-variant-numeric: tabular-nums; }
+  #paytable .sym span { color: var(--gold); font-weight: 700; display: inline-block; width: 1.6cqw; }
+  #paytable p, #paytable li { font-size: 1.05cqw; line-height: 1.6; color: #c6d3df; }
+  #paytable .close { position: absolute; top: 1.2cqw; right: 1.4cqw; }
+  #paytable svg { width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="game">
+    <canvas id="stage" aria-label="Slot reels"></canvas>
+    <div id="hud">
+      <button id="btnInfo" class="icon" title="Paytable &amp; rules" aria-label="Paytable">i</button>
+      <div class="stat"><label>Balance</label><b id="balance">0.00</b><small>FUN</small></div>
+      <div class="stat"><label>Total bet</label>
+        <div class="betrow"><button class="sq" id="betDown" aria-label="Lower bet">&minus;</button><b id="bet">1.00</b><button class="sq" id="betUp" aria-label="Raise bet">+</button></div>
+      </div>
+      <button id="spin" aria-label="Spin (Space)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#04220f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>
+      </button>
+      <div class="stat"><label>Win</label><b id="win">0.00</b></div>
+      <div class="toggles">
+        <button class="tog" id="btnAuto" aria-pressed="false">AUTO</button>
+        <button class="tog" id="btnTurbo" aria-pressed="false">TURBO</button>
+        <button class="tog on" id="btnSound" aria-pressed="true">SOUND</button>
+        <button class="tog on" id="btnMusic" aria-pressed="true">MUSIC</button>
+      </div>
+    </div>
+
+    <div id="start" class="overlay">
+      <div class="card">
+        <h1>Lanka Tusker Treasures</h1>
+        <div class="si">ලංකා ඇත් නිධානය</div>
+        <div id="loading">Preparing the Perahera&hellip;</div>
+        <button id="btnStart" hidden>TAP TO PLAY</button>
+        <p>Prototype build &middot; play money only &middot; Space = spin / skip</p>
+      </div>
+    </div>
+
+    <div id="paytable" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Paytable">
+      <div class="sheet">
+        <button class="icon close" id="ptClose" aria-label="Close">&times;</button>
+        <h2>Paytable</h2>
+        <div id="ptBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Injected by math/build.py — do not edit by hand. -->
+<script id="game-config" type="application/json">{"gameId":"lanka_tusker_treasures","name":"Lanka Tusker Treasures","version":"0.1.0","reels":5,"rows":3,"targetRtp":0.96,"maxWinMultiplier":5000,"symbols":{"W":{"name":"Golden Tusker","kind":"wild","label":"WILD"},"S":{"name":"Temple of the Tooth","kind":"scatter","label":"BONUS"},"H1":{"name":"Raksha Mask","kind":"high","label":""},"H2":{"name":"Blue Sapphire","kind":"high","label":""},"H3":{"name":"Ratnapura Ruby","kind":"high","label":""},"H4":{"name":"Cat's Eye","kind":"high","label":""},"H5":{"name":"Moonstone","kind":"high","label":""},"L1":{"name":"10","kind":"low","label":"10"},"L2":{"name":"9","kind":"low","label":"9"},"L3":{"name":"8","kind":"low","label":"8"},"L4":{"name":"7","kind":"low","label":"7"}},"linePays":{"W":{"3":100,"4":500,"5":2000},"H1":{"3":50,"4":250,"5":1000},"H2":{"3":40,"4":150,"5":600},"H3":{"3":30,"4":100,"5":400},"H4":{"3":25,"4":80,"5":300},"H5":{"3":20,"4":60,"5":250},"L1":{"3":10,"4":40,"5":150},"L2":{"3":10,"4":30,"5":120},"L3":{"3":9,"4":25,"5":100},"L4":{"3":8,"4":25,"5":100}},"scatterPays":{"3":3,"4":15,"5":100},"freeSpins":{"award":{"3":10,"4":15,"5":20},"retrigger":{"3":5,"4":10,"5":15},"multiplierStart":1,"multiplierStep":1,"multiplierMax":10,"_rule":"Each free-spin win is multiplied by the current Perahera multiplier, which then grows by multiplierStep (capped)."},"paylines":[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1],[0,1,1,1,0],[2,1,1,1,2],[1,0,1,2,1],[1,2,1,0,1],[0,1,0,1,0],[2,1,2,1,2],[1,1,0,1,1],[1,1,2,1,1],[0,2,0,2,0],[2,0,2,0,2],[0,2,2,2,0]],"stripSeed":20261015,"strips":{"base":[["L1","L2","H1","H5","H2","H3","H3","L4","H4","H2","H5","H2","L4","H4","L1","L4","L1","L3","H5","H4","H5","L1","L4","H3","L2","L1","S","L4","H5","L3","L2","L4","L3","L3","L2","H4","H5","H1","H4","L4","H3","L1","L3","H1","L2","L1","H4","L3","L3","L3","L2","L3","L2","L2","L2","L4","L4","L4","L3","L1","H3","L2","L4","H2","S","L4","L3","H5","L1"],["L4","L1","L2","L1","L1","H2","L2","H2","H3","L4","H5","H4","L3","L3","L4","H3","S","L1","H4","L3","L3","H4","W","H4","L2","L4","L4","L3","H1","W","L3","L4","L2","H1","H5","L4","L3","H2","L1","L3","L4","H5","L1","H5","L2","H5","L4","H1","H4","L1","L3","W","H3","H4","W","L2","L3","H5","L2","L4","H5","H3","L3","L2","L2","L4","S","L1","H2","L4","H3","L2","L1"],["L4","L4","L3","L4","S","L4","L2","H3","H1","S","H3","H3","L4","H3","W","L1","H5","L2","L2","H1","L1","H2","L3","L1","H4","L2","L4","H3","H5","L3","L2","H4","H5","W","H5","L3","L3","H4","H5","L1","L2","H2","L1","L3","L4","H4","H4","L2","H5","L3","L3","W","L1","L4","L3","L4","W","H5","L3","L2","H2","L1","L4","H4","H2","L4","L1","L2","L2","L1","H1","L3","L4"],["L4","H3","H1","L4","L3","L4","L2","L3","L3","H3","L1","L2","L4","H3","L1","L2","L1","H5","L3","L2","H1","L4","L1","L3","L2","H2","L2","L1","L3","L3","H5","L4","H4","H5","L1","S","H5","L4","H4","L3","L2","L2","H4","L2","L4","L1","H2","H3","L4","S","L4","H2","L1","L3","L3","L3","W","H5","W","W","H4","H5","L2","L1","W","H2","H4","H5","L4","L4","H4","H1","H3"],["H5","L4","H1","L2","H4","H1","L4","L3","L1","H2","H3","H2","L3","L4","L1","L2","L2","L2","H5","L1","L3","L1","H5","H4","L2","H4","W","L4","L4","S","H4","L4","L1","L3","L1","L2","H5","L4","H3","S","L4","L4","L3","L2","H4","L4","L3","H4","H3","L4","L1","L3","H5","H3","H2","L3","L1","H5","L2","H1","L1","L2","H2","L4","H5","L3","L3","L2","W","H3","L3"]],"free":[["H2","H5","L1","L2","H4","L4","L1","H2","H5","H4","L1","H5","L2","L4","H3","L2","H4","H1","L3","H4","L2","L4","H3","L3","H5","L1","H1","L1","H2","H3","L2","H1","L2","L2","L4","L1","S","L2","L4","L3","L2","H2","H4","L2","L3","H3","L1","L3","L4","L3","H1","L1","L4","L3","L4","L3","L4","H2","H5","H5","H4","H3","L3","H5","L3","L1","L4","L4"],["L3","L3","L1","W","L4","H5","L1","H4","L4","H1","L1","L1","L3","L2","H3","W","L2","H2","L2","H5","H3","H2","H4","L1","L1","W","H4","H1","W","H2","L3","L4","L3","L4","H5","H2","L2","H3","H4","L2","L3","H2","H5","L2","H3","H4","W","W","H5","L4","L4","H5","S","L2","L1","L3","L3","L2","W","W","H5","W","H1","L4","L3","L2","L1","H4","L4","H1","L4","L4","L4","W","L3","L1","L2","H3"],["H3","L3","W","H1","L4","L1","L1","L4","L2","W","L1","L3","H3","H2","H5","H4","L3","L3","L3","H5","L3","H4","W","L1","H4","W","H2","W","H1","L4","H3","L4","L3","H5","H4","W","H4","L2","L2","H4","W","L4","H3","H5","S","H5","L2","L4","L4","L4","L2","L4","H2","W","L3","L2","H3","L1","H5","L1","H2","L2","L4","H2","H5","H1","W","L2","L1","W","L4","L1","L3","L1","L2","H1","L2","L3","W"],["W","L4","L1","H5","L1","H3","H5","L1","W","H2","L2","W","H4","L1","H2","H5","H4","H2","L2","H5","L3","H4","L4","L3","L1","L1","H1","L3","L2","L3","L3","H3","S","W","L4","H5","L4","H4","W","L2","H2","L2","W","H1","H4","H2","L4","L2","L2","L1","L2","W","H3","H1","W","L3","L1","L4","L2","L4","H3","L4","W","L4","L2","H5","L3","L3","H5","L3","H3","W","H4","L4","H1","L1","L4","L3"],["L1","H1","H5","L2","L4","H2","L1","L1","H4","L3","H4","H1","L4","L1","H5","W","W","H4","W","W","H3","L3","L3","L1","H2","L3","L1","H5","L4","H5","L2","W","L3","W","L4","L2","L4","H2","L2","L1","H3","L4","L2","H1","H4","H1","L4","L2","H3","W","L4","H4","H3","H5","H4","L4","H2","L4","L1","L3","L3","L4","L2","W","L3","L2","L1","L2","S","H3","L3","L2","H2","H5","H5","L3"]]}}</script>
+
+<script>
+'use strict';
+/* =====================================================================
+   Lanka Tusker Treasures — playable prototype
+   Layers:  MathEngine (mirrors math/engine.py)  ->  OutcomeProvider (local demo | Stake RGS)
+            ->  Game controller (replays book events)  ->  View (canvas)  +  SoundEngine (WebAudio)
+   ===================================================================== */
+const CFG = JSON.parse(document.getElementById('game-config').textContent);
+const W = 1280, H = 720, SW = 160, SH = 140, NR = 5, NROW = 3;
+const RX = (W - SW * NR) / 2, RY = 152;
+const BETS = [0.2, 0.4, 1, 2, 4, 10, 20, 50, 100];
+const TEX = 2;
+const FONT_T = '"Cinzel Decorative", "Cinzel", Georgia, serif';
+const FONT_N = '"Cinzel", Georgia, serif';
+const FONT_SI = '"Noto Sans Sinhala", "Iskoola Pota", "Nirmala UI", sans-serif';
+const BIG_WIN_TIERS = [
+  { at: 15,  name: 'BIG WIN',   si: 'ජය' },
+  { at: 40,  name: 'MEGA WIN',  si: 'මහා ජය' },
+  { at: 100, name: 'EPIC WIN',  si: 'අති මහා ජය' },
+  { at: 300, name: 'MAHA JAYA', si: 'මහා ජයග්‍රහණය' },
+];
+
+/* ----------------------------------------------------------------- utils */
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const TAU = Math.PI * 2;
+const Ease = {
+  outCubic: u => 1 - (1 - u) ** 3,
+  inQuad: u => u * u,
+  outQuad: u => 1 - (1 - u) * (1 - u),
+  inOutSine: u => -(Math.cos(Math.PI * u) - 1) / 2,
+  outBack: (u, c = 1.70158) => 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2,
+  outElastic: u => u === 0 || u === 1 ? u : 2 ** (-10 * u) * Math.sin((u * 10 - .75) * TAU / 3) + 1,
+};
+// Reel landing curve: easeOutBack with c=1 (≈3.7% overshoot). f'(0) = 4, used to match spin speed.
+const landCurve = u => { const x = u - 1; return 1 + 2 * x * x * x + x * x; };
+const LAND_D0 = 4;
+const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function mix(a, b, t) { const A = hexRgb(a), B = hexRgb(b); return `rgb(${A.map((v, i) => Math.round(lerp(v, B[i], clamp(t, 0, 1)))).join(',')})`; }
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h); return [c, c.getContext('2d')]; }
+function seeded(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+const SecureRng = {
+  int(n) { const b = new Uint32Array(1), lim = Math.floor(0x100000000 / n) * n; let x; do { crypto.getRandomValues(b); x = b[0]; } while (x >= lim); return x % n; },
+};
+
+/* ============================================================ MATH ENGINE
+   1:1 port of math/engine.py. Amounts are multiples of TOTAL bet.          */
+class MathEngine {
+  constructor(cfg) {
+    this.cfg = cfg;
+    this.lines = cfg.paylines;
+    this.pays = cfg.linePays;
+    this.scatterPays = cfg.scatterPays;
+    this.fs = cfg.freeSpins;
+    this.maxWin = cfg.maxWinMultiplier;
+    this.strips = cfg.strips;
+  }
+  draw(rng, mode) {
+    const strips = this.strips[mode];
+    const stops = strips.map(s => rng.int(s.length));
+    const board = strips.map((s, i) => [0, 1, 2].map(r => s[(stops[i] + r) % s.length]));
+    return { stops, board };
+  }
+  pay(sym, n) { return (this.pays[sym] && this.pays[sym][n]) || 0; }
+  lineWin(syms) {
+    let wild = 0;
+    while (wild < NR && syms[wild] === 'W') wild++;
+    const wildPay = this.pay('W', wild);
+    if (wild === NR) return ['W', NR, wildPay];
+    const base = syms[wild];
+    if (base === 'S') return wildPay ? ['W', wild, wildPay] : null;
+    let n = wild;
+    for (let i = wild; i < NR; i++) { if (syms[i] === base || syms[i] === 'W') n++; else break; }
+    const subPay = this.pay(base, n);
+    if (wildPay > 0 && wildPay >= subPay) return ['W', wild, wildPay];
+    if (subPay > 0) return [base, n, subPay];
+    return null;
+  }
+  evaluate(board) {
+    const wins = [];
+    this.lines.forEach((line, i) => {
+      const r = this.lineWin(line.map((row, reel) => board[reel][row]));
+      if (r) wins.push({ line: i, symbol: r[0], count: r[1], pay: r[2] });
+    });
+    const scatters = [];
+    for (let r = 0; r < NR; r++) for (let row = 0; row < NROW; row++) if (board[r][row] === 'S') scatters.push([r, row]);
+    const lineTotal = wins.reduce((a, w) => a + w.pay, 0) / this.lines.length;
+    return { wins, scatters, total: lineTotal + (this.scatterPays[scatters.length] || 0) };
+  }
+  playRound(rng) {
+    const r4 = x => Math.round(x * 1e4) / 1e4;
+    const events = [];
+    let d = this.draw(rng, 'base');
+    let e = this.evaluate(d.board);
+    const baseWin = e.total;
+    events.push({ type: 'reveal', gameType: 'basegame', stops: d.stops, board: d.board });
+    if (e.wins.length || baseWin) events.push({ type: 'winInfo', wins: e.wins, scatters: e.scatters, amount: r4(baseWin) });
+    let freeWin = 0;
+    const nSc = e.scatters.length;
+    if (nSc >= 3) {
+      let left = this.fs.award[Math.min(nSc, 5)], mult = this.fs.multiplierStart, spin = 0;
+      events.push({ type: 'freeSpinTrigger', totalFs: left, positions: e.scatters });
+      while (left > 0) {
+        left--; spin++;
+        d = this.draw(rng, 'free');
+        e = this.evaluate(d.board);
+        const win = e.total * mult;
+        freeWin += win;
+        events.push({ type: 'reveal', gameType: 'freegame', stops: d.stops, board: d.board, spin, multiplier: mult });
+        if (e.total) events.push({ type: 'winInfo', wins: e.wins, scatters: e.scatters, multiplier: mult, amount: r4(win) });
+        if (e.total > 0) mult = Math.min(mult + this.fs.multiplierStep, this.fs.multiplierMax);
+        if (e.scatters.length >= 3) {
+          const add = this.fs.retrigger[Math.min(e.scatters.length, 5)];
+          left += add;
+          events.push({ type: 'freeSpinRetrigger', added: add, positions: e.scatters });
+        }
+        if (baseWin + freeWin >= this.maxWin) break;
+      }
+    }
+    let total = baseWin + freeWin;
+    if (total >= this.maxWin) { total = this.maxWin; events.push({ type: 'maxWinReached', amount: total }); }
+    events.push({ type: 'finalWin', amount: r4(total) });
+    return { payoutMultiplier: Math.round(total * 100), events };
+  }
+}
+
+/* ======================================================= OUTCOME PROVIDERS
+   Production: StakeRGSProvider. Outcomes come from pre-generated books on the RGS;
+   the client NEVER decides results. LocalDemoProvider exists only for dev/demo.   */
+class LocalDemoProvider {
+  constructor(engine) { this.engine = engine; this.balance = 1000; this.forced = []; }
+  async authenticate() { return { balance: this.balance, currency: 'FUN' }; }
+  // QA only: queue the next round matching a predicate, e.g. r => r.events.some(e => e.type === 'freeSpinTrigger').
+  force(pred, tries = 500000) {
+    for (let i = 0; i < tries; i++) { const r = this.engine.playRound(SecureRng); if (pred(r)) { this.forced.push(r); return r.payoutMultiplier / 100; } }
+    return null;
+  }
+  async play(bet) {
+    if (bet > this.balance + 1e-9) throw new Error('INSUFFICIENT_FUNDS');
+    this.balance -= bet;
+    const round = this.forced.shift() || this.engine.playRound(SecureRng);
+    return { round, balance: this.balance };
+  }
+  async endRound(bet, round) { this.balance += round.payoutMultiplier / 100 * bet; return { balance: this.balance }; }
+}
+
+class StakeRGSProvider {
+  // Skeleton of the Stake Engine RGS flow. Confirm endpoint names, amount scaling and
+  // response shapes against the current Stake Engine docs before wiring this in.
+  constructor() {
+    const q = new URLSearchParams(location.search);
+    this.rgs = q.get('rgs_url'); this.session = q.get('sessionID'); this.lang = q.get('lang') || 'en';
+  }
+  async post(path, body) {
+    const r = await fetch(`https://${this.rgs}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(`RGS ${path} ${r.status}`);
+    return r.json();
+  }
+  async authenticate() { return this.post('/wallet/authenticate', { sessionID: this.session, language: this.lang }); }
+  async play(bet, mode = 'base') { return this.post('/wallet/play', { sessionID: this.session, amount: Math.round(bet * 1e6), mode }); }
+  async endRound() { return this.post('/wallet/end-round', { sessionID: this.session }); }
+}
+
+/* ============================================================ SOUND ENGINE
+   100% procedural WebAudio placeholders. Production swaps these for mastered
+   assets (same API) — see docs/BLUEPRINT.md §Audio.                           */
+class SoundEngine {
+  constructor() { this.ctx = null; this.sfxOn = true; this.musicOn = true; this.timer = null; }
+  init() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || this.ctx) return;
+    const ctx = this.ctx = new AC();
+    this.master = ctx.createGain(); this.master.gain.value = .85;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = .004; comp.release.value = .2;
+    this.master.connect(comp).connect(ctx.destination);
+    this.sfx = ctx.createGain(); this.sfx.gain.value = .9; this.sfx.connect(this.master);
+    this.music = ctx.createGain(); this.music.gain.value = .3; this.music.connect(this.master);
+    this.verb = ctx.createConvolver(); this.verb.buffer = this.impulse(2.6, 2.6);
+    this.verbIn = ctx.createGain(); this.verbIn.gain.value = .5; this.verbIn.connect(this.verb).connect(this.master);
+    const len = ctx.sampleRate * 2; this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  }
+  impulse(sec, decay) {
+    const ctx = this.ctx, len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** decay; }
+    return b;
+  }
+  get t() { return this.ctx.currentTime; }
+  resume() { if (this.ctx && this.ctx.state !== 'running') this.ctx.resume(); }
+  setSfx(on) { this.sfxOn = on; if (this.ctx) this.sfx.gain.setTargetAtTime(on ? .9 : 0, this.t, .03); }
+  setMusic(on) { this.musicOn = on; if (this.ctx) this.music.gain.setTargetAtTime(on ? .3 : 0, this.t, .1); }
+
+  osc({ type = 'sine', f, f2, t, dur, gain = .2, attack = .004, out, verb = 0, detune = 0 }) {
+    const ctx = this.ctx; t = t ?? this.t;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.detune.value = detune;
+    o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + attack);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(out || this.sfx);
+    if (verb) { const s = ctx.createGain(); s.gain.value = verb; g.connect(s).connect(this.verbIn); }
+    o.start(t); o.stop(t + dur + .05);
+    return o;
+  }
+  noise({ t, dur, type = 'bandpass', f = 1000, f2, q = 1, gain = .2, attack = .003, out, verb = 0 }) {
+    const ctx = this.ctx; t = t ?? this.t;
+    const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = this.noiseBuf;
+    fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f, t);
+    if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + attack);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(fl).connect(g).connect(out || this.sfx);
+    if (verb) { const v = ctx.createGain(); v.gain.value = verb; g.connect(v).connect(this.verbIn); }
+    s.start(t, Math.random() * 1.5); s.stop(t + dur + .05);
+  }
+  bell(f, { t, gain = .18, dur = 2.6, verb = .6, out } = {}) {
+    [[1, 1], [2, .5], [2.76, .38], [5.4, .22], [8.93, .1]].forEach(([r, a], i) =>
+      this.osc({ f: f * r, t, dur: dur / (1 + i * .6), gain: gain * a, attack: .002, verb, out }));
+  }
+  ok() { return this.ctx && this.ctx.state === 'running'; }
+
+  click() { if (!this.ok()) return; this.osc({ type: 'triangle', f: 1400, f2: 900, dur: .05, gain: .07 }); }
+  spinStart() {
+    if (!this.ok()) return;
+    this.noise({ dur: .38, f: 300, f2: 2600, q: .9, gain: .16 });
+    this.osc({ f: 190, f2: 70, dur: .22, gain: .14 });
+  }
+  spinLoop(on) {
+    if (!this.ok()) return;
+    if (on && !this.loop) {
+      const ctx = this.ctx, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), am = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      s.buffer = this.noiseBuf; s.loop = true;
+      fl.type = 'bandpass'; fl.frequency.value = 850; fl.Q.value = .8;
+      am.gain.value = .5; lfo.type = 'square'; lfo.frequency.value = 17; lg.gain.value = .45;
+      lfo.connect(lg).connect(am.gain);
+      g.gain.setValueAtTime(.0001, this.t); g.gain.exponentialRampToValueAtTime(.05, this.t + .25);
+      s.connect(fl).connect(am).connect(g).connect(this.sfx);
+      s.start(); lfo.start();
+      this.loop = { s, g, lfo };
+    } else if (!on && this.loop) {
+      const { s, g, lfo } = this.loop; this.loop = null;
+      g.gain.setTargetAtTime(.0001, this.t, .05); s.stop(this.t + .3); lfo.stop(this.t + .3);
+    }
+  }
+  reelStop(i) {
+    if (!this.ok()) return;
+    this.osc({ f: 165 - i * 7, f2: 46, dur: .18, gain: .5 });
+    this.noise({ dur: .035, type: 'highpass', f: 2600, gain: .12 });
+    this.osc({ type: 'triangle', f: 560 + i * 20, dur: .06, gain: .05 });
+  }
+  scatterLand(n) {
+    if (!this.ok()) return;
+    const f = [0, 659.25, 783.99, 987.77, 1174.66, 1318.5][clamp(n, 1, 5)];
+    this.bell(f, { gain: .2, dur: 3, verb: .8 });
+    this.osc({ f: f / 4, dur: 1.2, gain: .12, verb: .5 });
+  }
+  anticipation() {
+    if (!this.ok()) return () => {};
+    const ctx = this.ctx, t = this.t;
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), trem = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    o.type = 'sawtooth'; o2.type = 'sawtooth'; o2.detune.value = 12;
+    o.frequency.setValueAtTime(98, t); o.frequency.exponentialRampToValueAtTime(392, t + 2.2);
+    o2.frequency.setValueAtTime(98, t); o2.frequency.exponentialRampToValueAtTime(392, t + 2.2);
+    fl.type = 'lowpass'; fl.Q.value = 6; fl.frequency.setValueAtTime(300, t); fl.frequency.exponentialRampToValueAtTime(3200, t + 2.2);
+    lfo.frequency.setValueAtTime(7, t); lfo.frequency.linearRampToValueAtTime(16, t + 2.2); lg.gain.value = .5; trem.gain.value = .5;
+    lfo.connect(lg).connect(trem.gain);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.08, t + .4);
+    o.connect(fl); o2.connect(fl); fl.connect(trem).connect(g).connect(this.sfx);
+    [o, o2, lfo].forEach(x => x.start(t));
+    this.noise({ t, dur: 2.2, f: 500, f2: 5000, q: 2, gain: .04, attack: 1.8 });
+    return () => { const n = this.t; g.gain.setTargetAtTime(.0001, n, .06); [o, o2, lfo].forEach(x => x.stop(n + .4)); };
+  }
+  win(level) {
+    if (!this.ok()) return;
+    const notes = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5, 1567.98];
+    const n = [3, 5, 9][clamp(level, 0, 2)];
+    for (let i = 0; i < n; i++) {
+      const t = this.t + i * .075;
+      this.osc({ type: 'triangle', f: notes[i], t, dur: .45, gain: .12, verb: .35 });
+      this.osc({ f: notes[i] * 2, t, dur: .3, gain: .04, verb: .3 });
+    }
+    this.bell(notes[n - 1] * 2, { t: this.t + n * .075, gain: .07, dur: 1.6 });
+  }
+  tick() { if (!this.ok()) return; this.osc({ f: 2000 + Math.random() * 300, dur: .03, gain: .035 }); }
+  coin() { if (!this.ok()) return; const f = 2300 + Math.random() * 1400; this.osc({ f, dur: .16, gain: .035 }); this.osc({ f: f * 1.5, dur: .1, gain: .02 }); }
+  bigWin() {
+    if (!this.ok()) return;
+    for (let i = 0; i < 18; i++) this.noise({ t: this.t + i * .045, dur: .07, f: 180, q: .7, type: 'lowpass', gain: .12 + i * .012 });
+    const t = this.t + .8;
+    [261.63, 329.63, 392, 523.25, 659.25].forEach((f, i) => this.osc({ type: 'sawtooth', f, t, dur: 1.9, gain: .045, attack: .03, verb: .35, detune: i * 3 }));
+    this.noise({ t, dur: 1.6, type: 'highpass', f: 4500, gain: .1 });
+    this.bell(1046.5, { t, gain: .12 });
+  }
+  tierUp() {
+    if (!this.ok()) return;
+    [783.99, 987.77, 1174.66, 1567.98].forEach((f, i) => this.osc({ type: 'triangle', f, t: this.t + i * .05, dur: .5, gain: .1, verb: .4 }));
+    this.noise({ dur: 1.3, type: 'highpass', f: 5200, gain: .1 });
+  }
+  multUp() { if (!this.ok()) return; this.osc({ type: 'triangle', f: 440, f2: 990, dur: .3, gain: .14 }); this.bell(1320, { t: this.t + .12, gain: .1, dur: 1.4 }); }
+  gong() {
+    if (!this.ok()) return;
+    [[1, .3], [1.48, .2], [2.1, .16], [2.93, .1], [3.76, .06]].forEach(([r, a]) => this.osc({ f: 72 * r, dur: 4.5, gain: a, attack: .01, verb: .7 }));
+    for (let i = 0; i < 6; i++) this.dhum(this.t + .5 + i * .16, this.sfx, .45);
+  }
+  fanfare() {
+    if (!this.ok()) return;
+    const seq = [587.33, 739.99, 880, 1174.66];
+    seq.forEach((f, i) => this.horn(f, this.t + i * .14, .35, this.sfx, .07));
+    this.horn(1174.66, this.t + .6, 1.2, this.sfx, .08);
+  }
+
+  /* ---- music: geta-bera style drum loop + drone + horanewa-like reed in free spins */
+  dhum(t, out, gain = .5) { this.osc({ f: 125, f2: 50, t, dur: .38, gain, out }); this.noise({ t, dur: .05, type: 'lowpass', f: 500, gain: gain * .25, out }); }
+  tha(t, out, gain = .22) { this.noise({ t, dur: .09, f: 1800, q: 1.3, gain, out }); this.osc({ type: 'triangle', f: 340, f2: 210, t, dur: .08, gain: gain * .45, out }); }
+  ta(t, out, gain = .06) { this.noise({ t, dur: .03, type: 'highpass', f: 4200, gain, out }); }
+  horn(f, t, dur, out, gain = .05) {
+    const ctx = this.ctx, o = ctx.createOscillator(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), v = ctx.createOscillator(), vg = ctx.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(f, t);
+    v.frequency.value = 5.5; vg.gain.value = f * .012; v.connect(vg).connect(o.frequency);
+    fl.type = 'bandpass'; fl.frequency.value = f * 2.2; fl.Q.value = 1.6;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + .03); g.gain.setValueAtTime(gain, t + dur * .7); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(fl).connect(g).connect(out);
+    const s = ctx.createGain(); s.gain.value = .25; g.connect(s).connect(this.verbIn);
+    o.start(t); v.start(t); o.stop(t + dur + .05); v.stop(t + dur + .05);
+  }
+  startMusic(mode) {
+    if (!this.ctx) return;
+    this.mode = mode;
+    if (!this.drone) {
+      const ctx = this.ctx, fl = ctx.createBiquadFilter(), g = ctx.createGain();
+      fl.type = 'lowpass'; fl.frequency.value = 520; g.gain.value = .07;
+      const os = [73.42, 110, 146.83].map((f, i) => { const o = ctx.createOscillator(); o.type = i === 2 ? 'sine' : 'triangle'; o.frequency.value = f; o.detune.value = (i - 1) * 4; o.connect(fl); o.start(); return o; });
+      fl.connect(g).connect(this.music);
+      this.drone = { os, g };
+    }
+    if (!this.timer) { this.step = 0; this.next = this.t + .1; this.timer = setInterval(() => this.schedule(), 25); }
+  }
+  schedule() {
+    if (!this.ok()) return;
+    const free = this.mode === 'free', sp = 60 / (free ? 118 : 90) / 4, out = this.music;
+    const reed = [587.33, 622.25, 739.99, 783.99, 880, 932.33, 1108.73, 1174.66]; // D double-harmonic
+    const phrase = [0, -1, 2, -1, 3, 4, -1, 3, 2, -1, 1, 0, -1, -1, 2, -1, 4, -1, 5, 4, 3, -1, 2, 3, 2, -1, 1, -1, 0, -1, -1, -1];
+    while (this.next < this.t + .12) {
+      const s = this.step, p = s % 16, t = this.next;
+      if (free) {
+        if ([0, 3, 6, 8, 10, 13].includes(p)) this.dhum(t, out, .5);
+        if (p === 4 || p === 12) this.tha(t, out, .26);
+        if (p % 2) this.ta(t, out, .07);
+        if (phrase[s] >= 0) this.horn(reed[phrase[s]], t, sp * 1.9, out, .045);
+      } else {
+        if ([0, 6, 10].includes(p)) this.dhum(t, out, .38);
+        if (p === 4 || p === 12) this.tha(t, out, .16);
+        if ([2, 7, 14, 15].includes(p)) this.ta(t, out, .045);
+        if (p % 8 === 0 && Math.random() < .45) {
+          const f = [293.66, 329.63, 369.99, 440, 493.88, 587.33][Math.floor(Math.random() * 6)];
+          this.osc({ f, t, dur: 1.4, gain: .05, attack: .08, out, verb: .5 });
+          this.osc({ f: f * 2, t, dur: .9, gain: .012, attack: .08, out });
+        }
+      }
+      this.next += sp; this.step = (this.step + 1) % 32;
+    }
+  }
+}
+
+/* ============================================================ SYMBOL ART
+   Procedural placeholders, drawn once to textures (normal + motion-blurred).
+   Production replaces with artist renders + Spine skeletal animations.        */
+const GOLD = ['#6e3f0c', '#f9e08b', '#c8902e', '#fff3c0', '#a8701f'];
+function goldGrad(c, x0, y0, x1, y1) { const g = c.createLinearGradient(x0, y0, x1, y1); GOLD.forEach((col, i) => g.addColorStop(i / (GOLD.length - 1), col)); return g; }
+function poly(c, pts) { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); }
+function glowDisc(c, x, y, r, color, a = .6) {
+  const g = c.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, color.replace('A', a)); g.addColorStop(1, color.replace('A', 0));
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+}
+function sparkle(c, x, y, r, a = 1) {
+  c.save(); c.globalAlpha = a; c.fillStyle = '#fff';
+  c.beginPath(); c.moveTo(x, y - r); c.quadraticCurveTo(x, y, x + r, y); c.quadraticCurveTo(x, y, x, y + r); c.quadraticCurveTo(x, y, x - r, y); c.quadraticCurveTo(x, y, x, y - r); c.fill();
+  c.restore();
+}
+function ribbon(c, text, y, a, b, ink) {
+  const w = 106, h = 24, x = 80 - w / 2;
+  c.save();
+  c.fillStyle = b;
+  poly(c, [[x - 14, y + 4], [x + 6, y + 4], [x + 6, y + h + 4], [x - 14, y + h + 4], [x - 7, y + h / 2 + 4]]); c.fill();
+  poly(c, [[x + w + 14, y + 4], [x + w - 6, y + 4], [x + w - 6, y + h + 4], [x + w + 14, y + h + 4], [x + w + 7, y + h / 2 + 4]]); c.fill();
+  const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, a); g.addColorStop(1, b);
+  c.fillStyle = g; c.beginPath(); c.roundRect(x, y, w, h, 5); c.fill();
+  c.lineWidth = 2; c.strokeStyle = goldGrad(c, x, y, x + w, y + h); c.stroke();
+  c.font = `900 17px ${FONT_N}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.6)'; c.strokeText(text, 80, y + h / 2 + 1);
+  c.fillStyle = ink; c.fillText(text, 80, y + h / 2 + 1);
+  c.restore();
+}
+
+function drawTusker(c) {
+  glowDisc(c, 80, 62, 78, 'rgba(255,200,80,A)', .55);
+  c.save(); c.translate(-6, 0);
+  const grey = c.createLinearGradient(0, 30, 0, 120); grey.addColorStop(0, '#8b8592'); grey.addColorStop(1, '#4a4550');
+  // legs + anklets
+  [[46, 80], [62, 82], [94, 82], [108, 80]].forEach(([x, y]) => {
+    c.fillStyle = grey; c.beginPath(); c.roundRect(x - 7, y, 14, 34, 5); c.fill();
+    c.fillStyle = goldGrad(c, x - 8, 0, x + 8, 0); c.fillRect(x - 8, y + 22, 16, 5);
+    c.fillStyle = '#d9d2c8'; c.fillRect(x - 6, y + 31, 12, 3);
+  });
+  c.fillStyle = grey; c.beginPath(); c.ellipse(80, 70, 46, 28, 0, 0, TAU); c.fill();
+  c.strokeStyle = '#4a4550'; c.lineWidth = 3; c.beginPath(); c.moveTo(36, 68); c.quadraticCurveTo(28, 82, 32, 98); c.stroke();
+  // body caparison with scalloped hem
+  const cap = c.createLinearGradient(0, 46, 0, 100); cap.addColorStop(0, '#b0154a'); cap.addColorStop(1, '#4d0820');
+  c.beginPath(); c.moveTo(38, 48); c.quadraticCurveTo(76, 38, 116, 48); c.lineTo(118, 90);
+  for (let x = 118; x > 38; x -= 10) c.quadraticCurveTo(x - 5, 100, x - 10, 90);
+  c.closePath(); c.fillStyle = cap; c.fill(); c.lineWidth = 2.5; c.strokeStyle = goldGrad(c, 38, 40, 118, 100); c.stroke();
+  c.strokeStyle = 'rgba(255,215,120,.85)'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(42, 56); c.quadraticCurveTo(78, 48, 114, 56); c.stroke();
+  c.beginPath(); c.moveTo(40, 86); c.lineTo(116, 86); c.stroke();
+  c.save(); c.shadowColor = '#ffe9a0'; c.shadowBlur = 5; c.fillStyle = '#fff1b8';
+  for (let x = 46; x <= 110; x += 8) for (const y of [64, 72, 80]) { c.beginPath(); c.arc(x + (y === 72 ? 4 : 0), y, 1.6, 0, TAU); c.fill(); }
+  c.restore();
+  c.fillStyle = goldGrad(c, 70, 64, 86, 80); c.beginPath(); c.arc(78, 71, 8, 0, TAU); c.fill();
+  c.fillStyle = '#e0103a'; c.beginPath(); c.arc(78, 71, 3.6, 0, TAU); c.fill();
+  // ear, head, trunk
+  c.fillStyle = '#6d6774'; c.beginPath(); c.ellipse(110, 58, 12, 18, -.2, 0, TAU); c.fill();
+  c.fillStyle = grey; c.beginPath(); c.arc(124, 48, 22, 0, TAU); c.fill();
+  c.strokeStyle = grey; c.lineCap = 'round'; c.lineWidth = 12;
+  c.beginPath(); c.moveTo(138, 56); c.bezierCurveTo(148, 74, 140, 96, 148, 108); c.quadraticCurveTo(152, 114, 158, 106); c.stroke();
+  c.strokeStyle = 'rgba(40,36,44,.5)'; c.lineWidth = 1.2;
+  for (let i = 0; i < 6; i++) { const y = 70 + i * 6; c.beginPath(); c.moveTo(139 + (i > 3 ? 4 : 0), y); c.lineTo(149 + (i > 3 ? 2 : 0), y + 1); c.stroke(); }
+  // face caparison (nettipattam)
+  c.beginPath(); c.moveTo(108, 36); c.quadraticCurveTo(124, 16, 142, 34); c.lineTo(146, 70);
+  for (let i = 0; i < 4; i++) c.quadraticCurveTo(141 - i * 4, 78, 137 - i * 4, 70);
+  c.lineTo(112, 52); c.closePath(); c.fillStyle = cap; c.fill(); c.lineWidth = 2; c.strokeStyle = goldGrad(c, 108, 20, 146, 76); c.stroke();
+  c.save(); c.shadowColor = '#ffe9a0'; c.shadowBlur = 4; c.fillStyle = '#fff1b8';
+  [[126, 30], [134, 38], [118, 38], [138, 50], [130, 48], [140, 62], [132, 60]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.5, 0, TAU); c.fill(); });
+  c.restore();
+  c.fillStyle = '#fff'; c.beginPath(); c.ellipse(124, 50, 3.4, 2.4, 0, 0, TAU); c.fill();
+  c.fillStyle = '#111'; c.beginPath(); c.arc(125, 50, 1.6, 0, TAU); c.fill();
+  // tusk
+  const iv = c.createLinearGradient(130, 60, 162, 80); iv.addColorStop(0, '#fffaf0'); iv.addColorStop(1, '#d8c9a4');
+  c.beginPath(); c.moveTo(130, 62); c.quadraticCurveTo(140, 88, 164, 76); c.quadraticCurveTo(144, 80, 137, 58); c.closePath(); c.fillStyle = iv; c.fill();
+  c.strokeStyle = 'rgba(90,70,40,.5)'; c.lineWidth = 1; c.stroke();
+  // ceremonial parasol bells
+  c.fillStyle = goldGrad(c, 70, 30, 90, 46); c.beginPath(); c.moveTo(66, 44); c.quadraticCurveTo(78, 26, 90, 44); c.closePath(); c.fill();
+  c.fillRect(77, 22, 2, 10);
+  c.restore();
+  ribbon(c, 'WILD', 114, '#ffe38a', '#b8751a', '#3a1d00');
+}
+
+function drawTemple(c) {
+  glowDisc(c, 80, 62, 76, 'rgba(255,215,110,A)', .6);
+  const wall = c.createLinearGradient(0, 20, 0, 110); wall.addColorStop(0, '#fffaf0'); wall.addColorStop(1, '#bdb5a2');
+  const roof = c.createLinearGradient(0, 8, 0, 60); roof.addColorStop(0, '#d8693a'); roof.addColorStop(1, '#6e2a12');
+  c.fillStyle = '#3a6db8'; c.fillRect(10, 106, 140, 4);
+  c.fillStyle = wall; c.fillRect(16, 88, 128, 18);
+  for (let x = 16; x < 144; x += 8) c.fillRect(x, 84, 5, 5);
+  // wings
+  [[22, 30], [108, 30]].forEach(([x, w]) => {
+    c.fillStyle = wall; c.fillRect(x, 70, w, 18);
+    c.fillStyle = roof; poly(c, [[x - 6, 72], [x + 4, 61], [x + w - 4, 61], [x + w + 6, 72]]); c.fill();
+    c.strokeStyle = goldGrad(c, x, 60, x + w, 72); c.lineWidth = 1.2; c.stroke();
+  });
+  // octagonal pavilion (Pattirippuwa)
+  c.fillStyle = wall; c.fillRect(50, 50, 60, 40);
+  c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(50, 50, 12, 40); c.fillRect(98, 50, 12, 40);
+  [64, 80, 96].forEach(x => {
+    c.beginPath(); c.moveTo(x - 5, 80); c.lineTo(x - 5, 64); c.arc(x, 64, 5, Math.PI, 0); c.lineTo(x + 5, 80); c.closePath();
+    c.fillStyle = '#3a1a0a'; c.fill(); c.strokeStyle = '#e9b949'; c.lineWidth = 1.3; c.stroke();
+    c.fillStyle = 'rgba(255,190,90,.65)'; c.fillRect(x - 2, 68, 4, 9);
+  });
+  c.fillStyle = roof; c.beginPath(); c.moveTo(34, 54); c.quadraticCurveTo(42, 52, 52, 34); c.lineTo(108, 34); c.quadraticCurveTo(118, 52, 126, 54); c.closePath(); c.fill();
+  c.strokeStyle = goldGrad(c, 34, 30, 126, 56); c.lineWidth = 2; c.stroke();
+  c.fillStyle = wall; c.fillRect(60, 24, 40, 12);
+  c.fillStyle = roof; c.beginPath(); c.moveTo(50, 27); c.quadraticCurveTo(58, 25, 66, 12); c.lineTo(94, 12); c.quadraticCurveTo(102, 25, 110, 27); c.closePath(); c.fill();
+  c.strokeStyle = goldGrad(c, 50, 10, 110, 28); c.stroke();
+  c.fillStyle = goldGrad(c, 74, 0, 86, 14); poly(c, [[76, 13], [80, 1], [84, 13]]); c.fill();
+  c.beginPath(); c.arc(80, 6, 2.2, 0, TAU); c.fill();
+  sparkle(c, 112, 20, 7, .9); sparkle(c, 40, 40, 4, .7);
+  ribbon(c, 'BONUS', 114, '#7b5cff', '#2b137a', '#ffe9a6');
+}
+
+function drawMask(c) {
+  const cx = 80, cy = 74;
+  glowDisc(c, cx, cy - 4, 72, 'rgba(255,90,60,A)', .35);
+  c.lineWidth = 7; c.strokeStyle = goldGrad(c, 30, 20, 130, 60);
+  c.beginPath(); c.arc(cx, cy, 47, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+  for (let k = -2; k <= 2; k++) { // naga crown
+    const a = -Math.PI / 2 + k * .43, hx = cx + Math.cos(a) * 52, hy = cy + 2 + Math.sin(a) * 52;
+    c.save(); c.translate(hx, hy); c.rotate(a + Math.PI / 2);
+    const g = c.createLinearGradient(0, -14, 0, 12); g.addColorStop(0, '#47d36e'); g.addColorStop(1, '#0d5a22');
+    c.beginPath(); c.moveTo(0, -15); c.bezierCurveTo(13, -12, 12, 7, 0, 12); c.bezierCurveTo(-12, 7, -13, -12, 0, -15);
+    c.fillStyle = g; c.fill(); c.strokeStyle = '#f2c94c'; c.lineWidth = 1.5; c.stroke();
+    c.fillStyle = '#f9e27a'; c.beginPath(); c.ellipse(0, 2, 4, 6, 0, 0, TAU); c.fill();
+    c.fillStyle = '#c0141f'; c.beginPath(); c.arc(-3, -8, 1.4, 0, TAU); c.arc(3, -8, 1.4, 0, TAU); c.fill();
+    c.restore();
+  }
+  const face = c.createRadialGradient(cx - 8, cy - 4, 6, cx, cy + 6, 48); face.addColorStop(0, '#ff6a4a'); face.addColorStop(.6, '#d81e1e'); face.addColorStop(1, '#6a0808');
+  c.beginPath(); c.ellipse(cx, cy + 8, 40, 44, 0, 0, TAU); c.fillStyle = face; c.fill(); c.lineWidth = 2.5; c.strokeStyle = '#3a0505'; c.stroke();
+  [-1, 1].forEach(s => { // ear ornaments, cheek scrolls, brows, eyes
+    c.fillStyle = goldGrad(c, cx + s * 42 - 7, 0, cx + s * 42 + 7, 0); c.beginPath(); c.arc(cx + s * 42, cy + 8, 7, 0, TAU); c.fill();
+    c.fillStyle = '#18a0ff'; c.beginPath(); c.arc(cx + s * 42, cy + 8, 3, 0, TAU); c.fill();
+    c.strokeStyle = '#ffd23a'; c.lineWidth = 3; c.beginPath();
+    for (let i = 0; i <= 26; i++) { const a = i / 26 * TAU * 1.2, r = 8 - i * .25; const x = cx + s * 27 + Math.cos(a) * r * s, y = cy + 20 + Math.sin(a) * r; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.stroke();
+    c.strokeStyle = '#120000'; c.lineWidth = 5.5; c.lineCap = 'round';
+    c.beginPath(); c.arc(cx + s * 16, cy - 2, 15, s > 0 ? Math.PI * 1.15 : Math.PI * 1.25, s > 0 ? Math.PI * 1.75 : Math.PI * 1.85); c.stroke();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(cx + s * 16, cy + 2, 10, 0, TAU); c.fill();
+    c.strokeStyle = '#ffd23a'; c.lineWidth = 3; c.stroke();
+    c.fillStyle = '#000'; c.beginPath(); c.arc(cx + s * 15, cy + 2, 5, 0, TAU); c.fill();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(cx + s * 13, cy, 1.6, 0, TAU); c.fill();
+  });
+  c.fillStyle = '#ffd23a'; c.beginPath(); c.ellipse(cx, cy - 26, 6, 9, 0, 0, TAU); c.fill();
+  c.fillStyle = '#1b8f3a'; c.beginPath(); c.ellipse(cx, cy - 26, 3, 5, 0, 0, TAU); c.fill();
+  c.fillStyle = '#a01010'; c.beginPath(); c.ellipse(cx, cy + 16, 7, 6, 0, 0, TAU); c.fill();
+  c.fillStyle = '#3a0000'; c.beginPath(); c.arc(cx - 3, cy + 18, 1.5, 0, TAU); c.arc(cx + 3, cy + 18, 1.5, 0, TAU); c.fill();
+  c.fillStyle = '#250000'; c.beginPath(); c.ellipse(cx, cy + 32, 23, 10, 0, 0, TAU); c.fill();
+  c.fillStyle = '#ff5a7a'; c.beginPath(); c.ellipse(cx, cy + 41, 8, 11, 0, 0, TAU); c.fill();
+  c.strokeStyle = '#a3203e'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(cx, cy + 34); c.lineTo(cx, cy + 48); c.stroke();
+  c.fillStyle = '#fffbe8';
+  for (let i = -3; i <= 3; i++) c.fillRect(cx + i * 5 - 2, cy + 23, 4, 5);
+  [-1, 1].forEach(s => { poly(c, [[cx + s * 20, cy + 26], [cx + s * 14, cy + 26], [cx + s * 18, cy + 42]]); c.fill(); });
+}
+
+function drawFaceted(c, cx, cy, rx, ry, n, rot, col) {
+  const P = (s, i, off = 0) => { const a = rot + (i + off) * TAU / n; return [cx + Math.cos(a) * rx * s, cy + Math.sin(a) * ry * s]; };
+  const LA = -Math.PI * .72;
+  c.save(); c.shadowColor = 'rgba(0,0,0,.55)'; c.shadowBlur = 12; c.shadowOffsetY = 6;
+  poly(c, Array.from({ length: n }, (_, i) => P(1.07, i))); c.fillStyle = goldGrad(c, cx - rx, cy - ry, cx + rx, cy + ry); c.fill();
+  c.restore();
+  const offs = [.12, -.08, .3, -.2];
+  for (let i = 0; i < n; i++) {
+    const o0 = P(1, i), o1 = P(1, i + 1), t0 = P(.52, i), t1 = P(.52, i + 1), m = P(.8, i, .5);
+    const tris = [[o0, o1, m], [o1, t1, m], [t1, t0, m], [t0, o0, m]];
+    tris.forEach((tri, k) => {
+      const gx = (tri[0][0] + tri[1][0] + tri[2][0]) / 3 - cx, gy = (tri[0][1] + tri[1][1] + tri[2][1]) / 3 - cy;
+      const s = .5 + .5 * Math.cos(Math.atan2(gy, gx) - LA);
+      poly(c, tri); c.fillStyle = mix(col.dark, col.light, s * .85 + offs[k] + (i % 2 ? .06 : -.04)); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = .8; c.stroke();
+    });
+  }
+  const tb = Array.from({ length: n }, (_, i) => P(.52, i));
+  const tg = c.createLinearGradient(cx - rx * .5, cy - ry * .5, cx + rx * .5, cy + ry * .5);
+  tg.addColorStop(0, col.light); tg.addColorStop(.55, col.base); tg.addColorStop(1, col.dark);
+  poly(c, tb); c.fillStyle = tg; c.globalAlpha = .85; c.fill(); c.globalAlpha = 1;
+  c.strokeStyle = 'rgba(255,255,255,.35)'; c.stroke();
+  poly(c, Array.from({ length: n }, (_, i) => P(1, i))); c.lineWidth = 2; c.strokeStyle = col.dark; c.stroke();
+  for (let i = 0; i < n; i += n / 4) { const [x, y] = P(1.03, i); c.fillStyle = goldGrad(c, x - 4, y - 4, x + 4, y + 4); c.beginPath(); c.arc(x, y, 4, 0, TAU); c.fill(); }
+  c.save(); c.globalAlpha = .55; c.fillStyle = '#fff'; c.beginPath(); c.ellipse(cx - rx * .25, cy - ry * .28, rx * .16, ry * .07, -.6, 0, TAU); c.fill(); c.restore();
+  sparkle(c, cx - rx * .42, cy - ry * .5, 10, .95);
+  sparkle(c, cx + rx * .4, cy + ry * .3, 5, .6);
+}
+const drawSapphire = c => { glowDisc(c, 80, 70, 74, 'rgba(70,140,255,A)', .45); drawFaceted(c, 80, 70, 48, 56, 8, -Math.PI / 2 + Math.PI / 8, { light: '#a9d8ff', base: '#2258e6', dark: '#061758' }); };
+const drawRuby = c => { glowDisc(c, 80, 70, 74, 'rgba(255,40,80,A)', .45); drawFaceted(c, 80, 70, 54, 52, 12, -Math.PI / 2, { light: '#ffa0ae', base: '#d4142f', dark: '#3f000b' }); };
+
+function drawCatsEye(c) {
+  const cx = 80, cy = 70;
+  glowDisc(c, cx, cy, 74, 'rgba(210,230,90,A)', .4);
+  c.save(); c.shadowColor = 'rgba(0,0,0,.55)'; c.shadowBlur = 12; c.shadowOffsetY = 6;
+  c.fillStyle = goldGrad(c, cx - 50, cy - 58, cx + 50, cy + 58); c.beginPath(); c.ellipse(cx, cy, 50, 58, 0, 0, TAU); c.fill(); c.restore();
+  c.fillStyle = '#fff1b0';
+  for (let i = 0; i < 22; i++) { const a = i / 22 * TAU; c.beginPath(); c.arc(cx + Math.cos(a) * 46.5, cy + Math.sin(a) * 54.5, 1.9, 0, TAU); c.fill(); }
+  const g = c.createRadialGradient(cx - 10, cy - 14, 4, cx, cy, 52);
+  g.addColorStop(0, '#fbffbe'); g.addColorStop(.3, '#d4d65e'); g.addColorStop(.68, '#878a22'); g.addColorStop(1, '#283006');
+  c.save(); c.beginPath(); c.ellipse(cx, cy, 41, 49, 0, 0, TAU); c.fillStyle = g; c.fill(); c.clip();
+  const band = (w, a) => { const b = c.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0); b.addColorStop(0, 'rgba(255,255,230,0)'); b.addColorStop(.5, `rgba(255,255,235,${a})`); b.addColorStop(1, 'rgba(255,255,230,0)'); c.fillStyle = b; c.fillRect(cx - w / 2, cy - 50, w, 100); };
+  band(44, .25); band(12, .95);
+  c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(cx - 16, cy - 24, 12, 7, -.6, 0, TAU); c.fill();
+  c.restore();
+  sparkle(c, cx + 18, cy - 30, 8, .9);
+}
+
+function drawMoonstone(c) {
+  const cx = 80, cy = 106, R = 74;
+  glowDisc(c, cx, cy - 30, 80, 'rgba(150,210,255,A)', .35);
+  c.fillStyle = '#7d7566'; c.fillRect(cx - R - 4, cy, 2 * R + 8, 8);
+  c.save(); c.beginPath(); c.arc(cx, cy, R, Math.PI, TAU); c.closePath(); c.clip();
+  const stone = c.createRadialGradient(cx, cy, 10, cx, cy, R); stone.addColorStop(0, '#efe9dc'); stone.addColorStop(1, '#a39a88'); c.fillStyle = stone; c.fillRect(0, 0, 160, 140);
+  const ring = (r0, r1, fill) => { c.beginPath(); c.arc(cx, cy, r0, Math.PI, TAU); c.arc(cx, cy, r1, TAU, Math.PI, true); c.closePath(); c.fillStyle = fill; c.fill(); };
+  const sep = r => { c.beginPath(); c.arc(cx, cy, r, Math.PI, TAU); c.strokeStyle = 'rgba(60,45,30,.7)'; c.lineWidth = 1.2; c.stroke(); };
+  ring(R, 65, '#d5752e');
+  c.fillStyle = '#ffbf5a';
+  for (let a = Math.PI; a < TAU; a += Math.PI / 20) { const b = a + Math.PI / 40; poly(c, [[cx + Math.cos(a - .05) * 65, cy + Math.sin(a - .05) * 65], [cx + Math.cos(b) * R, cy + Math.sin(b) * R], [cx + Math.cos(a + .1) * 65, cy + Math.sin(a + .1) * 65]]); c.fill(); }
+  sep(65); ring(64, 51, '#bcb29d');
+  c.fillStyle = '#5b4c36';
+  for (let i = 0; i < 13; i++) { // procession of animals
+    const a = Math.PI + (i + .5) * Math.PI / 13; c.save(); c.translate(cx + Math.cos(a) * 57.5, cy + Math.sin(a) * 57.5); c.rotate(a + Math.PI / 2);
+    c.beginPath(); c.ellipse(0, 0, 4.2, 2.4, 0, 0, TAU); c.fill();
+    c.beginPath(); c.arc(4.6, -1.4, 1.8, 0, TAU); c.fill();
+    c.fillRect(-3.2, 1.5, 1, 3); c.fillRect(2.2, 1.5, 1, 3);
+    c.restore();
+  }
+  sep(51); ring(50, 41, '#c9bfa9');
+  c.strokeStyle = '#6b5a3a'; c.lineWidth = 1.2; c.beginPath();
+  for (let i = 0; i <= 120; i++) { const a = Math.PI + i / 120 * Math.PI, r = 45.5 + Math.sin(i * 1.1) * 2.6; const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+  c.stroke(); sep(41); ring(40, 32, '#bfb39b');
+  c.strokeStyle = '#4c3f2b'; c.lineWidth = 1.3;
+  for (let i = 0; i < 11; i++) { // hamsa (geese)
+    const a = Math.PI + (i + .5) * Math.PI / 11; const x = cx + Math.cos(a) * 36, y = cy + Math.sin(a) * 36;
+    c.beginPath(); c.arc(x, y, 2.2, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(x + 1.5, y - 1.5); c.quadraticCurveTo(x + 4, y - 5, x + 2, y - 6); c.stroke();
+  }
+  sep(32); ring(31, 0, '#d8cfb8');
+  for (const [len, wid, col] of [[27, 7.5, '#d97a96'], [17, 6, '#f4b9c6']]) {
+    for (let k = 0; k < 9; k++) {
+      const a = Math.PI + (k + .5) * Math.PI / 9; c.save(); c.translate(cx, cy); c.rotate(a);
+      c.beginPath(); c.moveTo(4, 0); c.quadraticCurveTo(len * .5, -wid, len, 0); c.quadraticCurveTo(len * .5, wid, 4, 0); c.fillStyle = col; c.fill();
+      c.strokeStyle = 'rgba(120,40,60,.5)'; c.lineWidth = .8; c.stroke(); c.restore();
+    }
+  }
+  c.fillStyle = goldGrad(c, cx - 8, cy - 8, cx + 8, cy); c.beginPath(); c.arc(cx, cy, 7, Math.PI, TAU); c.fill();
+  const sheen = c.createRadialGradient(cx - 20, cy - 50, 4, cx - 10, cy - 40, 70); sheen.addColorStop(0, 'rgba(170,225,255,.55)'); sheen.addColorStop(1, 'rgba(120,180,255,0)');
+  c.globalCompositeOperation = 'screen'; c.fillStyle = sheen; c.fillRect(0, 0, 160, 140);
+  c.restore();
+  sparkle(c, 48, 46, 7, .85);
+}
+
+function drawNumber(c, txt, cols) {
+  glowDisc(c, 80, 72, 66, cols.glow, .4);
+  const size = txt.length > 1 ? 86 : 100;
+  const [tc, t] = mkCanvas(160 * TEX, 140 * TEX); t.scale(TEX, TEX);
+  t.font = `900 ${size}px ${FONT_N}`; t.textAlign = 'center'; t.textBaseline = 'middle';
+  const y = 76;
+  const fill = t.createLinearGradient(0, y - size / 2, 0, y + size / 2);
+  fill.addColorStop(0, cols.a); fill.addColorStop(.5, cols.b); fill.addColorStop(1, cols.c);
+  t.fillStyle = fill; t.fillText(txt, 80, y);
+  t.globalCompositeOperation = 'source-atop';
+  const gl = t.createLinearGradient(0, y - size / 2, 0, y); gl.addColorStop(0, 'rgba(255,255,255,.65)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+  t.fillStyle = gl; t.fillRect(0, 0, 160, y - 4);
+  c.font = `900 ${size}px ${FONT_N}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+  c.lineWidth = 13; c.strokeStyle = 'rgba(0,0,0,.5)'; c.strokeText(txt, 82, y + 4);
+  c.lineWidth = 10; c.strokeStyle = cols.d; c.strokeText(txt, 80, y);
+  c.lineWidth = 4; c.strokeStyle = goldGrad(c, 20, y - 50, 140, y + 50); c.strokeText(txt, 80, y);
+  c.drawImage(tc, 0, 0, 160, 140);
+  sparkle(c, 112, 40, 6, .8);
+}
+
+const SYMBOL_PAINTERS = {
+  W: drawTusker, S: drawTemple, H1: drawMask, H2: drawSapphire, H3: drawRuby, H4: drawCatsEye, H5: drawMoonstone,
+  L1: c => drawNumber(c, '10', { a: '#fff1b0', b: '#f0a02a', c: '#8a4a08', d: '#3a1a02', glow: 'rgba(255,170,40,A)' }),
+  L2: c => drawNumber(c, '9',  { a: '#c8ffe0', b: '#22b36b', c: '#0a4a2a', d: '#021a0e', glow: 'rgba(40,220,130,A)' }),
+  L3: c => drawNumber(c, '8',  { a: '#efd8ff', b: '#a052ea', c: '#3a0f6a', d: '#160428', glow: 'rgba(170,90,255,A)' }),
+  L4: c => drawNumber(c, '7',  { a: '#d0f6ff', b: '#25a8d8', c: '#08405a', d: '#021822', glow: 'rgba(40,180,240,A)' }),
+};
+
+function buildTextures() {
+  const tex = {}, blur = {};
+  for (const [sym, paint] of Object.entries(SYMBOL_PAINTERS)) {
+    const [cv, c] = mkCanvas(SW * TEX, SH * TEX); c.scale(TEX, TEX); paint(c); tex[sym] = cv;
+    const [bv, b] = mkCanvas(SW * TEX, SH * TEX); const n = 9, spread = SH * TEX * .32;
+    b.globalAlpha = .2; for (let i = 0; i < n; i++) b.drawImage(cv, 0, (i / (n - 1) - .5) * spread);
+    blur[sym] = bv;
+  }
+  return { tex, blur };
+}
+
+/* ============================================================ REEL */
+class Reel {
+  constructor(i) { this.i = i; this.top = 0; this.offset = 0; this.state = 'idle'; this.speed = 0; this.vel = 0; this.over = new Map(); this.pop = [0, 0, 0]; this.antic = 0; }
+  setStrip(strip, stop) { this.strip = strip; this.offset = stop; this.top = 0; this.over.clear(); }
+  symAt(j) { if (this.over.has(j)) return this.over.get(j); const L = this.strip.length; return this.strip[(((j + this.offset) % L) + L) % L]; }
+  start(t, delay, vmax) { this.state = 'wait'; this.t0 = t + delay; this.vmax = vmax; this.top0 = this.top; this.pop = [0, 0, 0]; }
+  requestStop(stop, t, extra) {
+    const F = Math.floor(this.top) - extra;
+    const L = this.strip.length;
+    for (let k = -1; k <= 3; k++) this.over.set(F + k, this.strip[(((stop + k) % L) + L) % L]);
+    this.stopFrom = this.top; this.dist = this.top - F; this.F = F; this.finalStop = stop;
+    this.dur = this.dist * LAND_D0 / this.vmax; this.ts = t; this.state = 'stopping';
+    return new Promise(res => { this.onLand = res; });
+  }
+  update(t, dt) {
+    const prev = this.top;
+    switch (this.state) {
+      case 'wait': if (t >= this.t0) { this.state = 'windup'; this.ts = t; } break;
+      case 'windup': { const u = Math.min(1, (t - this.ts) / .12); this.top = this.top0 + .2 * Ease.outQuad(u); if (u >= 1) { this.state = 'accel'; this.ts = t; } break; }
+      case 'accel': { const u = Math.min(1, (t - this.ts) / .2); this.speed = this.vmax * Ease.inQuad(u); this.top -= this.speed * dt; if (u >= 1) this.state = 'spin'; break; }
+      case 'spin': this.top -= this.vmax * dt; break;
+      case 'stopping': {
+        const u = Math.min(1, (t - this.ts) / this.dur);
+        this.top = this.stopFrom - this.dist * landCurve(u);
+        if (u >= 1) {
+          this.offset = this.finalStop - 0; this.top = 0; this.over.clear(); this.state = 'idle'; this.vel = 0;
+          const cb = this.onLand; this.onLand = null; cb && cb();
+          return;
+        }
+        break;
+      }
+    }
+    this.vel = dt > 0 ? Math.abs(prev - this.top) / dt : 0;
+  }
+}
+
+/* ============================================================ VIEW */
+class View {
+  constructor(canvas, art) {
+    this.cv = canvas; this.ctx = canvas.getContext('2d'); this.art = art;
+    this.reels = Array.from({ length: NR }, (_, i) => new Reel(i));
+    this.particles = []; this.tweens = []; this.toasts = []; this.overlay = null;
+    this.win = null; this.mode = 'base'; this.fsHud = null;
+    this.t = 0; this.last = performance.now();
+    this.buildStatic();
+    this.resize(); addEventListener('resize', () => this.resize());
+  }
+  resize() {
+    const r = this.cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+    this.cv.width = Math.round(r.width * dpr); this.cv.height = Math.round(r.height * dpr); this.k = this.cv.width / W;
+  }
+  buildStatic() {
+    this.bg = { base: this.paintBackground('base'), free: this.paintBackground('free') };
+    this.frame = { base: this.paintFrame('base'), free: this.paintFrame('free') };
+    this.title = this.paintTitle();
+    const [coin, cc] = mkCanvas(48, 48);
+    const g = cc.createRadialGradient(18, 16, 2, 24, 24, 24); g.addColorStop(0, '#fff6c8'); g.addColorStop(.5, '#f4c24a'); g.addColorStop(1, '#8a5a0a');
+    cc.fillStyle = g; cc.beginPath(); cc.arc(24, 24, 22, 0, TAU); cc.fill();
+    cc.strokeStyle = '#7a4a06'; cc.lineWidth = 2; cc.beginPath(); cc.arc(24, 24, 16, 0, TAU); cc.stroke();
+    cc.fillStyle = '#7a4a06'; cc.font = `800 15px ${FONT_SI}`; cc.textAlign = 'center'; cc.textBaseline = 'middle'; cc.fillText('ශ්‍රී', 24, 25);
+    this.coin = coin;
+    this.glows = {};
+    for (const [k, col] of Object.entries({ gold: '255,205,90', white: '255,255,255', ember: '255,130,40', cyan: '120,220,255', pink: '255,150,190', green: '170,255,120' })) {
+      const [gc, gx] = mkCanvas(64, 64); const rg = gx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      rg.addColorStop(0, `rgba(${col},1)`); rg.addColorStop(.25, `rgba(${col},.6)`); rg.addColorStop(1, `rgba(${col},0)`);
+      gx.fillStyle = rg; gx.fillRect(0, 0, 64, 64); this.glows[k] = gc;
+    }
+    const rnd = seeded(7);
+    this.stars = Array.from({ length: 150 }, () => ({ x: rnd() * W, y: rnd() * H * .55, r: rnd() * 1.3 + .3, p: rnd() * TAU }));
+    this.lanterns = [
+      { x: 70, len: 70, s: 20, hue: 350, p: 0 }, { x: 160, len: 120, s: 16, hue: 45, p: 1.3 },
+      { x: 1120, len: 110, s: 17, hue: 200, p: 2.1 }, { x: 1210, len: 65, s: 21, hue: 290, p: .6 },
+    ];
+  }
+  paintBackground(mode) {
+    const [cv, c] = mkCanvas(W * 2, H * 2); c.scale(2, 2);
+    const free = mode === 'free';
+    const sky = c.createLinearGradient(0, 0, 0, H);
+    (free ? [['#12040a', 0], ['#3a0b14', .4], ['#7a1d18', .66], ['#c2491d', .84], ['#f0a03a', 1]]
+          : [['#060a1e', 0], ['#121a48', .42], ['#38235a', .66], ['#8a3f55', .84], ['#d98a52', 1]]).forEach(([col, s]) => sky.addColorStop(s, col));
+    c.fillStyle = sky; c.fillRect(0, 0, W, H);
+    const mx = free ? 1000 : 1060, my = free ? 300 : 112, mr = free ? 70 : 44;
+    const mg = c.createRadialGradient(mx, my, mr * .6, mx, my, mr * 4); mg.addColorStop(0, free ? 'rgba(255,150,60,.45)' : 'rgba(255,240,200,.35)'); mg.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = mg; c.fillRect(0, 0, W, H);
+    const md = c.createRadialGradient(mx - mr * .3, my - mr * .3, 2, mx, my, mr); md.addColorStop(0, free ? '#ffd9a0' : '#fffaf0'); md.addColorStop(1, free ? '#e8742a' : '#e8dcc0');
+    c.fillStyle = md; c.beginPath(); c.arc(mx, my, mr, 0, TAU); c.fill();
+    if (!free) { c.fillStyle = 'rgba(160,150,130,.25)'; [[-12, -8, 9], [10, 12, 7], [14, -14, 5]].forEach(([dx, dy, r]) => { c.beginPath(); c.arc(mx + dx, my + dy, r, 0, TAU); c.fill(); }); }
+    const rnd = seeded(free ? 11 : 5);
+    [[.62, free ? '#3d1220' : '#2a2050', 70], [.72, free ? '#2a0a14' : '#1b1638', 50]].forEach(([yb, col, amp]) => {
+      c.fillStyle = col; c.beginPath(); c.moveTo(0, H);
+      for (let x = 0; x <= W; x += 20) c.lineTo(x, H * yb - Math.abs(Math.sin(x * .004 + rnd() * .4)) * amp - rnd() * 14);
+      c.lineTo(W, H); c.closePath(); c.fill();
+    });
+    const sil = free ? '#1a0508' : '#0d0a1f';
+    c.fillStyle = sil; c.beginPath(); // Sigiriya
+    c.moveTo(0, H); c.lineTo(30, 600); c.bezierCurveTo(50, 520, 70, 470, 96, 440); c.lineTo(214, 430); c.bezierCurveTo(236, 450, 250, 520, 268, 600); c.lineTo(300, H); c.closePath(); c.fill();
+    c.strokeStyle = free ? 'rgba(255,140,60,.35)' : 'rgba(200,190,255,.18)'; c.lineWidth = 2; c.beginPath(); c.moveTo(96, 440); c.lineTo(214, 430); c.bezierCurveTo(236, 450, 250, 520, 268, 600); c.stroke();
+    // Ruwanwelisaya stupa
+    const sx = 1150, sy = 610;
+    const st = c.createLinearGradient(sx - 80, 0, sx + 80, 0);
+    st.addColorStop(0, free ? '#7a3a22' : '#6d6a8a'); st.addColorStop(.45, free ? '#f0b080' : '#e6e4f2'); st.addColorStop(1, free ? '#5a2214' : '#4a4866');
+    c.fillStyle = sil; c.fillRect(sx - 110, sy, 220, H - sy);
+    c.fillStyle = st; c.beginPath(); c.ellipse(sx, sy, 80, 74, 0, Math.PI, TAU); c.fill();
+    c.fillRect(sx - 92, sy - 4, 184, 12);
+    c.fillRect(sx - 16, sy - 92, 32, 18);
+    c.beginPath(); c.moveTo(sx - 12, sy - 92); c.lineTo(sx, sy - 196); c.lineTo(sx + 12, sy - 92); c.closePath(); c.fill();
+    c.fillStyle = '#f5c542'; c.beginPath(); c.arc(sx, sy - 200, 5, 0, TAU); c.fill();
+    c.fillStyle = sil; // palms
+    [[18, 1], [1262, -1]].forEach(([px, d]) => {
+      c.beginPath(); c.moveTo(px - 5, H); c.quadraticCurveTo(px + d * 16, 520, px + d * 44, 360); c.lineTo(px + d * 50, 362); c.quadraticCurveTo(px + d * 24, 520, px + 7, H); c.fill();
+      for (let k = 0; k < 7; k++) {
+        const a = -Math.PI / 2 + (k - 3) * .5, hx = px + d * 47, hy = 360;
+        c.beginPath(); c.moveTo(hx, hy);
+        c.quadraticCurveTo(hx + Math.cos(a) * 60 * d, hy + Math.sin(a) * 50 - 10, hx + Math.cos(a) * 110 * d, hy + Math.sin(a) * 40 + 40);
+        c.quadraticCurveTo(hx + Math.cos(a) * 60 * d, hy + Math.sin(a) * 50 + 6, hx, hy + 4); c.fill();
+      }
+    });
+    const water = c.createLinearGradient(0, 640, 0, H); water.addColorStop(0, free ? 'rgba(255,120,40,.18)' : 'rgba(120,140,255,.12)'); water.addColorStop(1, 'rgba(0,0,0,.6)');
+    c.fillStyle = water; c.fillRect(0, 640, W, 80);
+    return cv;
+  }
+  paintFrame(mode) {
+    const [cv, c] = mkCanvas(W * 2, H * 2); c.scale(2, 2);
+    const free = mode === 'free';
+    const x = RX - 20, y = RY - 20, w = SW * NR + 40, h = SH * NROW + 40;
+    c.save(); c.shadowColor = 'rgba(0,0,0,.7)'; c.shadowBlur = 30; c.shadowOffsetY = 10;
+    c.fillStyle = goldGrad(c, x, y, x + w, y + h); c.beginPath(); c.roundRect(x, y, w, h, 20); c.fill(); c.restore();
+    c.fillStyle = '#2a1404'; c.beginPath(); c.roundRect(x + 7, y + 7, w - 14, h - 14, 14); c.fill();
+    c.strokeStyle = 'rgba(255,240,190,.5)'; c.lineWidth = 1; c.beginPath(); c.roundRect(x + 3, y + 3, w - 6, h - 6, 17); c.stroke();
+    for (let i = 0; i < NR; i++) {
+      const g = c.createLinearGradient(0, RY, 0, RY + SH * NROW);
+      (free ? ['#3a0d06', '#1c0603', '#3a0d06'] : ['#2b0f2e', '#130616', '#2b0f2e']).forEach((col, k) => g.addColorStop(k / 2, col));
+      c.fillStyle = g; c.fillRect(RX + i * SW + 1, RY, SW - 2, SH * NROW);
+      c.save(); c.globalAlpha = .06; c.strokeStyle = free ? '#ffb070' : '#d0a0ff'; c.lineWidth = 1;
+      for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(RX + i * SW + SW / 2, RY + SH * k + SH / 2, 52, 0, TAU); c.stroke(); }
+      c.restore();
+    }
+    for (let i = 1; i < NR; i++) { const sx = RX + i * SW; c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(sx - 2, RY, 4, SH * NROW); c.fillStyle = goldGrad(c, sx - 1, RY, sx + 1, RY + SH * 3); c.fillRect(sx - .75, RY, 1.5, SH * NROW); }
+    [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(([cx, cy], k) => {
+      c.fillStyle = goldGrad(c, cx - 16, cy - 16, cx + 16, cy + 16); c.beginPath(); c.arc(cx, cy, 15, 0, TAU); c.fill();
+      c.fillStyle = k % 2 ? '#d4142f' : '#2258e6'; c.beginPath(); c.arc(cx, cy, 7, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(cx - 2, cy - 2, 2, 0, TAU); c.fill();
+    });
+    return cv;
+  }
+  paintTitle() {
+    const [cv, c] = mkCanvas(900 * 2, 110 * 2); c.scale(2, 2);
+    c.font = `900 44px ${FONT_T}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    c.lineWidth = 9; c.strokeStyle = '#2a1200'; c.strokeText('LANKA TUSKER TREASURES', 450, 44);
+    c.fillStyle = goldGrad(c, 0, 20, 0, 70); c.fillText('LANKA TUSKER TREASURES', 450, 44);
+    c.font = `800 18px ${FONT_SI}`; c.fillStyle = '#f2d48a'; c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,.6)';
+    c.strokeText('ලංකා ඇත් නිධානය', 450, 88); c.fillText('ලංකා ඇත් නිධානය', 450, 88);
+    return cv;
+  }
+  setMode(mode) { this.mode = mode; }
+
+  tween(dur, fn, ease = u => u) { return new Promise(res => this.tweens.push({ t: 0, dur, fn, ease, res })); }
+  finishTweens() { const tw = this.tweens; this.tweens = []; tw.forEach(x => { x.fn(x.ease(1)); x.res(); }); }
+  toast(text, opts = {}) { this.toasts.push({ text, t0: this.t, dur: opts.dur || 1.6, size: opts.size || 46, color: opts.color || '#ffe38a', y: opts.y || 360 }); }
+
+  emit(p) { if (this.particles.length < 1100) this.particles.push(p); }
+  burst(x, y, n, kind = 'gold') {
+    for (let i = 0; i < n; i++) { const a = rand(0, TAU), s = rand(80, 340); this.emit({ type: 'spark', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 220, life: rand(.4, .9), max: .9, size: rand(10, 22), glow: kind }); }
+  }
+  coinShower(n) {
+    for (let i = 0; i < n; i++) this.emit({ type: 'coin', x: W / 2 + rand(-80, 80), y: 640, vx: rand(-380, 380), vy: rand(-900, -520), g: 900, life: 2.6, max: 2.6, size: rand(18, 30), spin: rand(4, 12), ph: rand(0, TAU) });
+  }
+  cellCenter(r, row) { return [RX + r * SW + SW / 2, RY + row * SH + SH / 2]; }
+
+  showWins(list) { this.win = { list, t0: this.t }; }
+  clearWins() { this.win = null; }
+
+  step(now) { const dt = clamp((now - this.last) / 1000, 0, .05); this.last = now; this.t += dt; this.update(dt); }
+  frameLoop(now) {
+    this.step(now); this.draw(); this.lastFrameAt = now;
+    requestAnimationFrame(n => this.frameLoop(n));
+  }
+  startLoop() {
+    this.last = this.lastFrameAt = performance.now();
+    requestAnimationFrame(n => this.frameLoop(n));
+    // rAF pauses in hidden tabs; keep game logic ticking so an in-flight round always completes.
+    setInterval(() => { const now = performance.now(); if (now - this.lastFrameAt > 250) this.step(now); }, 50);
+  }
+  update(dt) {
+    const t = this.t;
+    this.reels.forEach(r => r.update(t, dt));
+    for (let i = this.tweens.length - 1; i >= 0; i--) {
+      const tw = this.tweens[i]; tw.t += dt; const u = Math.min(1, tw.t / tw.dur); tw.fn(tw.ease(u));
+      if (u >= 1) { this.tweens.splice(i, 1); tw.res(); }
+    }
+    if (this.mode === 'base' && Math.random() < dt * 6) this.emit({ type: 'firefly', x: rand(0, W), y: rand(380, 700), vx: rand(-12, 12), vy: rand(-14, 4), g: 0, life: rand(3, 6), max: 6, size: rand(8, 16), glow: 'green', ph: rand(0, TAU) });
+    if (this.mode === 'free') for (const tx of [176, 1104]) if (Math.random() < dt * 40) this.emit({ type: 'ember', x: tx + rand(-8, 8), y: 470, vx: rand(-20, 20), vy: rand(-140, -60), g: -10, life: rand(.8, 1.8), max: 1.8, size: rand(6, 14), glow: 'ember', ph: rand(0, TAU) });
+    if (this.overlay && this.overlay.type === 'big' && Math.random() < dt * 22) { this.coinShower(1); if (Math.random() < .3) audio.coin(); }
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i]; p.life -= dt;
+      if (p.life <= 0 || p.y > H + 60) { this.particles.splice(i, 1); continue; }
+      p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.type === 'firefly') { p.vx += Math.sin(t * 1.3 + p.ph) * 6 * dt; }
+      if (p.type === 'spark') { p.vx *= .97; p.vy *= .97; }
+    }
+  }
+
+  draw() {
+    const c = this.ctx, t = this.t;
+    c.setTransform(this.k, 0, 0, this.k, 0, 0);
+    c.drawImage(this.bg[this.mode], 0, 0, W, H);
+    // twinkling stars
+    c.fillStyle = '#fff';
+    for (const s of this.stars) { c.globalAlpha = .35 + .35 * Math.sin(t * 2 + s.p); c.fillRect(s.x, s.y, s.r, s.r); }
+    c.globalAlpha = 1;
+    this.drawLanterns(c, t);
+    if (this.mode === 'free') { this.drawTorch(c, 176, 470, t); this.drawTorch(c, 1104, 470, t + 1.7); }
+    this.drawParticles(c, ['firefly', 'ember']);
+    this.drawHeader(c, t);
+    c.drawImage(this.frame[this.mode], 0, 0, W, H);
+    this.drawReels(c, t);
+    this.drawParticles(c, ['spark']);
+    this.drawToasts(c, t);
+    if (this.overlay) this.drawOverlay(c, t);
+    this.drawParticles(c, ['coin']);
+  }
+
+  drawLanterns(c, t) {
+    for (const L of this.lanterns) {
+      const sway = Math.sin(t * 1.1 + L.p) * .09;
+      c.save(); c.translate(L.x, 0); c.rotate(sway);
+      c.strokeStyle = 'rgba(30,20,10,.8)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, L.len); c.stroke();
+      c.translate(0, L.len + L.s);
+      c.globalCompositeOperation = 'lighter'; c.globalAlpha = .55 + .1 * Math.sin(t * 3 + L.p);
+      c.drawImage(this.glows.gold, -L.s * 3, -L.s * 3, L.s * 6, L.s * 6);
+      c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+      const s = L.s;
+      for (const rot of [0, Math.PI / 4]) {
+        c.save(); c.rotate(rot);
+        const g = c.createRadialGradient(0, 0, 2, 0, 0, s * 1.2); g.addColorStop(0, `hsla(${L.hue},100%,88%,.95)`); g.addColorStop(1, `hsla(${L.hue},85%,50%,.85)`);
+        c.fillStyle = g; c.fillRect(-s * .72, -s * .72, s * 1.44, s * 1.44);
+        c.strokeStyle = `hsla(${L.hue},70%,25%,.9)`; c.lineWidth = 1.2; c.strokeRect(-s * .72, -s * .72, s * 1.44, s * 1.44);
+        c.restore();
+      }
+      c.strokeStyle = `hsla(${(L.hue + 40) % 360},90%,60%,.9)`; c.lineWidth = 2;
+      for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(k * 4, s); c.quadraticCurveTo(k * 4 + Math.sin(t * 2 + k) * 4, s + 18, k * 5 + Math.sin(t * 2.4 + k) * 6, s + 34); c.stroke(); }
+      c.restore();
+    }
+  }
+  drawTorch(c, x, y, t) {
+    c.fillStyle = '#2a1408'; c.fillRect(x - 4, y, 8, 120);
+    c.fillStyle = goldGrad(c, x - 14, y - 6, x + 14, y + 6); c.beginPath(); c.moveTo(x - 16, y - 4); c.lineTo(x + 16, y - 4); c.lineTo(x + 8, y + 8); c.lineTo(x - 8, y + 8); c.closePath(); c.fill();
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const f = 1 + .12 * Math.sin(t * 17) + .08 * Math.sin(t * 29);
+    c.globalAlpha = .7; c.drawImage(this.glows.ember, x - 80 * f, y - 110 * f, 160 * f, 160 * f);
+    [['#ff5a14', 18, 46], ['#ffb02e', 12, 34], ['#fff1a0', 6, 20]].forEach(([col, rw, rh], k) => {
+      c.globalAlpha = .85; c.fillStyle = col; c.beginPath();
+      c.ellipse(x + Math.sin(t * 9 + k) * 2, y - 6 - rh * f * .5, rw * f, rh * f * .6, Math.sin(t * 7 + k) * .08, 0, TAU); c.fill();
+    });
+    c.restore();
+  }
+  drawHeader(c, t) {
+    if (this.fsHud) {
+      const h = this.fsHud;
+      const pill = (x, label, value, pop) => {
+        const s = 1 + .25 * Math.max(0, 1 - (t - pop) / .45) * Math.sin(Math.min(1, (t - pop) / .45) * Math.PI);
+        c.save(); c.translate(x, 92); c.scale(s, s);
+        c.fillStyle = 'rgba(20,6,4,.85)'; c.beginPath(); c.roundRect(-140, -40, 280, 80, 40); c.fill();
+        c.lineWidth = 3; c.strokeStyle = goldGrad(c, -140, -40, 140, 40); c.stroke();
+        c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.font = `700 15px ${FONT_N}`; c.fillStyle = '#f2d48a'; c.fillText(label, 0, -18);
+        c.font = `900 34px ${FONT_N}`; c.fillStyle = goldGrad(c, 0, -2, 0, 34); c.fillText(value, 0, 14);
+        c.restore();
+      };
+      pill(380, 'FREE SPINS', `${h.spin} / ${h.total}`, h.spinPop || -9);
+      pill(900, 'PERAHERA MULTIPLIER', `x${h.mult}`, h.multPop || -9);
+      c.save(); c.textAlign = 'center'; c.font = `900 22px ${FONT_T}`; c.fillStyle = '#ffe38a'; c.lineWidth = 5; c.strokeStyle = '#2a0800';
+      c.strokeText('PERAHERA', 640, 92); c.fillText('PERAHERA', 640, 92); c.restore();
+      return;
+    }
+    const tw = 900, th = 110, x = (W - tw) / 2, y = 20;
+    const [sc, s] = this.shimmerCanvas || (this.shimmerCanvas = mkCanvas(tw * 2, th * 2));
+    s.globalCompositeOperation = 'source-over'; s.clearRect(0, 0, sc.width, sc.height); s.drawImage(this.title, 0, 0);
+    s.globalCompositeOperation = 'source-atop';
+    const px = ((t * .35) % 1.6 - .3) * sc.width;
+    const g = s.createLinearGradient(px - 120, 0, px + 120, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.75)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    s.fillStyle = g; s.fillRect(0, 0, sc.width, sc.height);
+    c.drawImage(sc, x, y, tw, th);
+  }
+
+  drawReels(c, t) {
+    const win = this.win;
+    let active = null;
+    if (win) {
+      const el = t - win.t0;
+      if (win.list.length > 1 && el > 1.8) active = [win.list[Math.floor((el - 1.8) / 1.25) % win.list.length]];
+      else active = win.list;
+    }
+    const hot = new Set(); if (active) active.forEach(w => w.cells.forEach(([r, row]) => hot.add(r * 10 + row)));
+    for (const reel of this.reels) {
+      const x = RX + reel.i * SW;
+      c.save(); c.beginPath(); c.rect(x, RY, SW, SH * NROW); c.clip();
+      const k = Math.floor(reel.top), frac = reel.top - k, blurred = reel.vel > 7;
+      for (let r = -1; r <= 3; r++) {
+        const y = RY + (r - frac) * SH, sym = reel.symAt(k + r);
+        if (y > RY + SH * NROW || y + SH < RY) continue;
+        if (reel.state === 'idle' && r >= 0 && r < 3 && hot.has(reel.i * 10 + r)) continue;
+        const pop = reel.state === 'idle' && r >= 0 && r < 3 ? reel.pop[r] : 0;
+        const ps = pop ? 1 + .22 * Math.sin(Math.min(1, (t - pop) / .4) * Math.PI) * (t - pop < .4 ? 1 : 0) : 1;
+        const img = blurred ? this.art.blur[sym] : this.art.tex[sym];
+        c.drawImage(img, x + SW / 2 - SW * ps / 2, y + SH / 2 - SH * ps / 2, SW * ps, SH * ps);
+        if (win && reel.state === 'idle' && r >= 0 && r < 3) { c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(x, y, SW, SH); }
+      }
+      const sh = c.createLinearGradient(0, RY, 0, RY + SH * NROW);
+      sh.addColorStop(0, 'rgba(0,0,0,.55)'); sh.addColorStop(.12, 'rgba(0,0,0,0)'); sh.addColorStop(.88, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.55)');
+      c.fillStyle = sh; c.fillRect(x, RY, SW, SH * NROW);
+      c.restore();
+      if (reel.antic) {
+        const a = .55 + .35 * Math.sin(t * 14);
+        c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,190,60,${a})`; c.lineWidth = 6; c.shadowColor = '#ffb020'; c.shadowBlur = 26;
+        c.strokeRect(x + 3, RY + 3, SW - 6, SH * NROW - 6); c.restore();
+        if (Math.random() < .5) this.emit({ type: 'spark', x: x + rand(0, SW), y: RY + SH * NROW, vx: rand(-20, 20), vy: rand(-320, -160), g: 0, life: .9, max: .9, size: rand(8, 16), glow: 'gold' });
+      }
+    }
+    if (!win) return;
+    const el = t - win.t0;
+    for (const w of active) {
+      if (w.line == null) continue;
+      const line = CFG.paylines[w.line];
+      const pts = [[RX - 14, RY + line[0] * SH + SH / 2], ...line.map((row, r) => this.cellCenter(r, row)), [RX + SW * NR + 14, RY + line[4] * SH + SH / 2]];
+      let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      const prog = active.length > 1 || win.list.length === 1 ? clamp(el / .5, 0, 1) : 1;
+      c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+      c.setLineDash([len, len]); c.lineDashOffset = len * (1 - Ease.outCubic(prog));
+      c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y));
+      c.shadowColor = w.color; c.shadowBlur = 18; c.strokeStyle = w.color; c.lineWidth = 7; c.globalAlpha = .9; c.stroke();
+      c.shadowBlur = 0; c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
+      c.restore();
+    }
+    for (const w of active) for (const [r, row] of w.cells) {
+      const [cx, cy] = this.cellCenter(r, row), sym = this.reels[r].symAt(row);
+      const s = 1.04 + .08 * Math.abs(Math.sin((t - win.t0) * 3.4));
+      c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = .5 + .25 * Math.sin(t * 6);
+      c.drawImage(this.glows.gold, cx - 90, cy - 90, 180, 180); c.restore();
+      c.drawImage(this.art.tex[sym], cx - SW * s / 2, cy - SH * s / 2, SW * s, SH * s);
+    }
+    if (active.length === 1 && win.list.length > 1) {
+      const w = active[0], [lr, lrow] = w.cells[w.cells.length - 1], [cx, cy] = this.cellCenter(lr, lrow);
+      const label = w.label;
+      c.save(); c.font = `800 20px ${FONT_N}`; const tw = c.measureText(label).width + 28;
+      c.fillStyle = 'rgba(10,6,20,.88)'; c.beginPath(); c.roundRect(cx - tw / 2, cy + SH / 2 - 40, tw, 32, 16); c.fill();
+      c.strokeStyle = w.color; c.lineWidth = 2; c.stroke();
+      c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, cx, cy + SH / 2 - 24); c.restore();
+    }
+  }
+  drawParticles(c, types) {
+    c.save();
+    for (const p of this.particles) {
+      if (!types.includes(p.type)) continue;
+      const a = clamp(p.life / p.max, 0, 1);
+      if (p.type === 'coin') {
+        const sx = Math.cos(this.t * p.spin + p.ph);
+        c.globalAlpha = Math.min(1, a * 2);
+        c.save(); c.translate(p.x, p.y); c.scale(Math.abs(sx) < .08 ? .08 : sx, 1); c.drawImage(this.coin, -p.size / 2, -p.size / 2, p.size, p.size); c.restore();
+      } else {
+        c.globalCompositeOperation = 'lighter';
+        c.globalAlpha = p.type === 'firefly' ? a * (.5 + .5 * Math.sin(this.t * 4 + p.ph)) : a;
+        const s = p.size * (p.type === 'ember' ? a : 1);
+        c.drawImage(this.glows[p.glow], p.x - s, p.y - s, s * 2, s * 2);
+        c.globalCompositeOperation = 'source-over';
+      }
+    }
+    c.restore();
+  }
+  drawToasts(c, t) {
+    this.toasts = this.toasts.filter(o => t - o.t0 < o.dur);
+    for (const o of this.toasts) {
+      const u = (t - o.t0) / o.dur, s = Ease.outBack(Math.min(1, u * 4)), a = u > .7 ? 1 - (u - .7) / .3 : 1;
+      c.save(); c.globalAlpha = a; c.translate(W / 2, o.y - u * 40); c.scale(s, s);
+      c.font = `900 ${o.size}px ${FONT_N}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+      c.lineWidth = 10; c.strokeStyle = '#1a0a00'; c.strokeText(o.text, 0, 0); c.fillStyle = o.color; c.fillText(o.text, 0, 0);
+      c.restore();
+    }
+  }
+  rays(c, x, y, t, alpha, col = '255,210,110') {
+    c.save(); c.translate(x, y); c.rotate(t * .25); c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 18; i++) {
+      c.rotate(TAU / 18);
+      const g = c.createLinearGradient(0, 0, 0, -700); g.addColorStop(0, `rgba(${col},${.35 * alpha})`); g.addColorStop(1, `rgba(${col},0)`);
+      c.fillStyle = g; c.beginPath(); c.moveTo(0, 0); c.lineTo(-60, -700); c.lineTo(60, -700); c.closePath(); c.fill();
+    }
+    c.restore();
+  }
+  bigText(c, text, x, y, size, fill, s = 1, font = FONT_N) {
+    c.save(); c.translate(x, y); c.scale(s, s);
+    c.font = `900 ${size}px ${font}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    c.lineWidth = size * .2; c.strokeStyle = '#1a0800'; c.strokeText(text, 0, 0);
+    c.fillStyle = fill || goldGrad(c, 0, -size / 2, 0, size / 2); c.fillText(text, 0, 0); c.restore();
+  }
+  drawOverlay(c, t) {
+    const o = this.overlay, el = t - o.t0;
+    const fade = o.t1 ? 1 - clamp((t - o.t1) / .35, 0, 1) : clamp(el / .3, 0, 1);
+    if (o.t1 && fade <= 0) { this.overlay = null; return; }
+    c.save(); c.globalAlpha = fade;
+    c.fillStyle = 'rgba(4,2,12,.72)'; c.fillRect(0, 0, W, H);
+    if (o.type === 'big') {
+      this.rays(c, W / 2, 330, t, 1);
+      const tier = BIG_WIN_TIERS[o.tier];
+      const ts = Ease.outElastic(clamp((t - o.tierT) / .9, 0, 1));
+      this.bigText(c, tier.name, W / 2, 250, 92, null, ts * (1 + .03 * Math.sin(t * 5)), FONT_T);
+      this.bigText(c, tier.si, W / 2, 330, 34, '#ffe9b0', ts, FONT_SI);
+      this.bigText(c, fmt(o.value), W / 2, 430, 84, '#ffffff', 1 + .02 * Math.sin(t * 9));
+    } else if (o.type === 'fsIntro') {
+      this.rays(c, W / 2, 300, t, 1, '255,150,60');
+      this.bigText(c, 'PERAHERA', W / 2, 190, 86, null, Ease.outBack(clamp(el / .6, 0, 1)), FONT_T);
+      this.bigText(c, 'FREE SPINS', W / 2, 270, 52, '#ffe9b0', Ease.outBack(clamp((el - .15) / .6, 0, 1)));
+      this.bigText(c, String(o.spins), W / 2, 380, 120, null, Ease.outElastic(clamp((el - .3) / 1, 0, 1)));
+      c.font = `700 20px ${FONT_N}`; c.fillStyle = '#f2d48a'; c.textAlign = 'center';
+      c.fillText('Every winning spin grows the Perahera multiplier', W / 2, 470);
+      for (let k = 0; k < 4; k++) { // procession
+        const x = ((el * 110 + k * 230) % (W + 320)) - 160, bob = Math.abs(Math.sin(el * 4 + k)) * 6;
+        c.drawImage(this.art.tex.W, x - 70, 520 - bob, 140, 122);
+      }
+      if (el > 1.2) { c.globalAlpha = fade * (.6 + .4 * Math.sin(t * 4)); c.font = `800 18px ${FONT_N}`; c.fillStyle = '#fff'; c.fillText('TAP TO BEGIN', W / 2, 505); }
+    } else if (o.type === 'fsOutro') {
+      this.rays(c, W / 2, 330, t, 1, '255,180,90');
+      this.bigText(c, 'PERAHERA COMPLETE', W / 2, 230, 62, null, Ease.outBack(clamp(el / .6, 0, 1)), FONT_T);
+      this.bigText(c, 'TOTAL WIN', W / 2, 320, 36, '#ffe9b0');
+      this.bigText(c, fmt(o.value), W / 2, 410, 92, '#ffffff', 1 + .02 * Math.sin(t * 9));
+      c.font = `700 20px ${FONT_N}`; c.fillStyle = '#f2d48a'; c.textAlign = 'center'; c.fillText(`${o.spins} free spins played`, W / 2, 490);
+    }
+    c.restore();
+  }
+}
+
+/* ============================================================ GAME CONTROLLER
+   Replays a book (event list) — identical code path for local demo and RGS.   */
+class Game {
+  constructor(view, provider) {
+    this.view = view; this.provider = provider; this.engine = new MathEngine(CFG);
+    this.betIdx = 2; this.balance = 0; this.busy = false; this.auto = false; this.turbo = false;
+    this.skipping = false; this.waiters = new Set();
+    view.reels.forEach(r => r.setStrip(CFG.strips.base[r.i], SecureRng.int(CFG.strips.base[r.i].length)));
+  }
+  get bet() { return BETS[this.betIdx]; }
+  async init() { const a = await this.provider.authenticate(); this.balance = a.balance; ui.update(); }
+
+  sleep(s) {
+    if (this.skipping) return Promise.resolve();
+    return new Promise(res => { const w = { res }; w.id = setTimeout(() => { this.waiters.delete(w); res(); }, s * 1000); this.waiters.add(w); });
+  }
+  skip() { this.skipping = true; for (const w of this.waiters) { clearTimeout(w.id); w.res(); } this.waiters.clear(); this.view.finishTweens(); }
+  press() { audio.resume(); if (this.busy) this.skip(); else this.spin(); }
+
+  async spin() {
+    if (this.busy) return;
+    if (this.bet > this.balance + 1e-9) { this.view.toast('INSUFFICIENT BALANCE', { size: 34, color: '#ff8a8a' }); this.setAuto(false); return; }
+    this.busy = true; ui.update();
+    const bet = this.bet;
+    this.view.clearWins(); ui.setWin(0);
+    let res;
+    try { res = await this.provider.play(bet); }
+    catch (e) { console.error(e); this.view.toast('CONNECTION ERROR', { size: 34, color: '#ff8a8a' }); this.busy = false; ui.update(); return; }
+    this.balance = res.balance; ui.update();
+    try { await this.playBook(res.round.events, bet); }
+    catch (e) { console.error('presentation error', e); }
+    const end = await this.provider.endRound(bet, res.round);
+    this.balance = end.balance;
+    this.busy = false; ui.update();
+    if (this.auto) { await new Promise(r => setTimeout(r, this.turbo ? 150 : 450)); if (this.auto && !this.busy) this.spin(); }
+  }
+  setAuto(on) { this.auto = on; ui.update(); if (on && !this.busy) this.spin(); }
+
+  async playBook(events, bet) {
+    let shown = 0, fsTotal = 0, fsSpins = 0, inFs = false;
+    for (const ev of events) {
+      switch (ev.type) {
+        case 'reveal':
+          if (ev.gameType === 'freegame') {
+            const h = this.view.fsHud; h.spin = ev.spin; h.spinPop = this.view.t;
+            if (ev.multiplier !== h.mult) { h.mult = ev.multiplier; h.multPop = this.view.t; audio.multUp(); }
+            await this.sleep(this.turbo ? .1 : .3);
+          }
+          await this.spinTo(ev);
+          break;
+        case 'winInfo': {
+          await this.presentWin(ev, bet, shown, inFs);
+          shown += ev.amount * bet;
+          if (inFs) fsTotal += ev.amount * bet;
+          break;
+        }
+        case 'freeSpinTrigger':
+          await this.freeSpinIntro(ev);
+          inFs = true; fsSpins = ev.totalFs;
+          break;
+        case 'freeSpinRetrigger':
+          fsSpins += ev.added; this.view.fsHud.total = fsSpins; this.view.fsHud.spinPop = this.view.t;
+          audio.scatterLand(5); this.view.toast(`+${ev.added} FREE SPINS`, { size: 58 });
+          await this.sleep(1.4);
+          break;
+        case 'maxWinReached':
+          this.view.toast('MAX WIN REACHED', { size: 60, dur: 2.4 }); await this.sleep(2);
+          break;
+        case 'finalWin':
+          if (inFs) await this.freeSpinOutro(ev.amount * bet, this.view.fsHud.spin);
+          ui.setWin(ev.amount * bet);
+          break;
+      }
+    }
+  }
+
+  async spinTo(ev) {
+    this.skipping = false;
+    const v = this.view, board = ev.board, turbo = this.turbo;
+    v.clearWins();
+    const vmax = turbo ? 42 : 27;
+    audio.spinStart(); audio.spinLoop(true);
+    v.reels.forEach((r, i) => r.start(v.t, i * (turbo ? .02 : .06), vmax));
+    await this.sleep(turbo ? .3 : .62);
+    let sc = 0, landedSc = 0, stopRiser = null;
+    const lands = [];
+    for (let i = 0; i < NR; i++) {
+      const antic = !this.skipping && sc >= 2 && i >= 2;
+      if (i > 0) {
+        if (antic) {
+          await Promise.all(lands); // build tension: previous reels settle first
+          v.reels[i].antic = 1; for (let k = i + 1; k < NR; k++) v.reels[k].antic = 0;
+          if (!stopRiser) stopRiser = audio.anticipation();
+          await this.sleep(1.5);
+        } else await this.sleep(turbo ? .06 : .15);
+      }
+      const reel = v.reels[i];
+      lands.push(reel.requestStop(ev.stops[i], v.t, antic ? 7 : (this.skipping ? 2 : 4)).then(() => {
+        reel.antic = 0;
+        audio.reelStop(i);
+        board[i].forEach((s, row) => {
+          if (s === 'S') { landedSc++; reel.pop[row] = v.t; audio.scatterLand(landedSc); const [x, y] = v.cellCenter(i, row); v.burst(x, y, 26, 'cyan'); }
+          if (s === 'W') { reel.pop[row] = v.t; const [x, y] = v.cellCenter(i, row); v.burst(x, y, 10, 'gold'); }
+        });
+      }));
+      sc += board[i].filter(s => s === 'S').length;
+    }
+    await Promise.all(lands);
+    if (stopRiser) stopRiser();
+    audio.spinLoop(false);
+  }
+
+  async presentWin(ev, bet, before, inFs) {
+    this.skipping = false;
+    const v = this.view, amt = ev.amount * bet, x = ev.amount;
+    const list = ev.wins.map(w => {
+      const line = CFG.paylines[w.line];
+      return { line: w.line, cells: line.slice(0, w.count).map((row, r) => [r, row]), color: `hsl(${(w.line * 47) % 360},95%,62%)`,
+               label: `LINE ${w.line + 1}  ·  ${fmt(w.pay / CFG.paylines.length * bet * (ev.multiplier || 1))}` };
+    });
+    if (ev.scatters.length >= 3) list.push({ line: null, cells: ev.scatters, color: '#9db8ff', label: `SCATTER  ·  ${fmt((CFG.scatterPays[ev.scatters.length] || 0) * bet * (ev.multiplier || 1))}` });
+    v.showWins(list);
+    list.forEach(w => w.cells.forEach(([r, row]) => { const [cx, cy] = v.cellCenter(r, row); v.burst(cx, cy, 8, 'gold'); }));
+    if (inFs && ev.multiplier > 1) { v.toast(`x${ev.multiplier}`, { size: 110, dur: 1.1, y: 330 }); audio.multUp(); await this.sleep(.6); this.skipping = false; }
+    if (x >= BIG_WIN_TIERS[0].at) { await this.bigWin(before, amt, x, bet); return; }
+    audio.win(x < 1 ? 0 : x < 5 ? 1 : 2);
+    const dur = clamp(.5 + x * .22, .5, 2.4) * (this.turbo ? .5 : 1);
+    await this.countUp(before, before + amt, dur);
+    await this.sleep(inFs ? .7 : .2);
+  }
+  countUp(from, to, dur) {
+    let lastTick = 0;
+    ui.flash(true);
+    return this.view.tween(dur, u => {
+      ui.setWin(lerp(from, to, u));
+      if (this.view.t - lastTick > .06 && u < 1) { lastTick = this.view.t; audio.tick(); }
+    }, Ease.outQuad).then(() => ui.flash(false));
+  }
+  async bigWin(before, amt, x, bet) {
+    const v = this.view;
+    const tierFor = val => { let k = 0; BIG_WIN_TIERS.forEach((tr, i) => { if (val / bet >= tr.at) k = i; }); return k; };
+    v.overlay = { type: 'big', t0: v.t, tier: 0, tierT: v.t, value: 0 };
+    v.coinShower(40); audio.bigWin();
+    const dur = 3 + tierFor(amt) * 2.2;
+    let lastTick = 0;
+    await v.tween(dur, u => {
+      const val = amt * u; v.overlay.value = val; ui.setWin(before + val);
+      const k = tierFor(val);
+      if (k > v.overlay.tier) { v.overlay.tier = k; v.overlay.tierT = v.t; audio.tierUp(); v.coinShower(50); }
+      if (v.t - lastTick > .07 && u < 1) { lastTick = v.t; audio.tick(); }
+    }, Ease.outCubic);
+    v.overlay.value = amt;
+    this.skipping = false;
+    await this.sleep(2.6);
+    v.overlay.t1 = v.t;
+    this.skipping = false;
+    await this.sleep(.4);
+  }
+  async freeSpinIntro(ev) {
+    this.skipping = false;
+    const v = this.view;
+    v.showWins([{ line: null, cells: ev.positions, color: '#9db8ff', label: '' }]);
+    audio.gong();
+    await this.sleep(1.6);
+    this.skipping = false;
+    v.overlay = { type: 'fsIntro', t0: v.t, spins: ev.totalFs };
+    audio.fanfare();
+    await this.sleep(1.2); this.skipping = false;
+    await this.sleep(this.auto ? 2.2 : 30);
+    v.clearWins();
+    v.setMode('free'); audio.startMusic('free');
+    v.reels.forEach(r => r.setStrip(CFG.strips.free[r.i], SecureRng.int(CFG.strips.free[r.i].length)));
+    v.fsHud = { spin: 0, total: ev.totalFs, mult: CFG.freeSpins.multiplierStart, spinPop: v.t, multPop: v.t };
+    v.overlay.t1 = v.t;
+    this.skipping = false;
+    await this.sleep(.5);
+  }
+  async freeSpinOutro(total, spins) {
+    this.skipping = false;
+    const v = this.view;
+    v.overlay = { type: 'fsOutro', t0: v.t, value: 0, spins };
+    audio.fanfare(); v.coinShower(60);
+    await v.tween(this.turbo ? 1 : 2.4, u => { v.overlay.value = total * u; }, Ease.outCubic);
+    this.skipping = false;
+    await this.sleep(this.auto ? 2 : 30);
+    v.overlay.t1 = v.t; v.fsHud = null;
+    v.setMode('base'); audio.startMusic('base');
+    v.reels.forEach(r => r.setStrip(CFG.strips.base[r.i], SecureRng.int(CFG.strips.base[r.i].length)));
+    v.clearWins();
+    this.skipping = false;
+    await this.sleep(.4);
+  }
+}
+
+/* ============================================================ UI */
+const $ = id => document.getElementById(id);
+const audio = new SoundEngine();
+let game, view;
+const ui = {
+  update() {
+    if (!game) return;
+    $('balance').textContent = fmt(game.balance);
+    $('bet').textContent = fmt(game.bet);
+    $('betDown').disabled = game.busy || game.betIdx === 0;
+    $('betUp').disabled = game.busy || game.betIdx === BETS.length - 1;
+    $('spin').classList.toggle('busy', game.busy);
+    $('spin').classList.toggle('stop', game.busy);
+    $('btnAuto').classList.toggle('on', game.auto); $('btnAuto').setAttribute('aria-pressed', game.auto);
+    $('btnTurbo').classList.toggle('on', game.turbo); $('btnTurbo').setAttribute('aria-pressed', game.turbo);
+  },
+  setWin(v) { $('win').textContent = fmt(v); },
+  flash(on) { $('win').classList.toggle('flash', on); },
+};
+
+function buildPaytable() {
+  const n = CFG.paylines.length;
+  const bet = game.bet;
+  const order = ['W', 'H1', 'H2', 'H3', 'H4', 'H5', 'L1', 'L2', 'L3', 'L4'];
+  const cards = order.map(s => {
+    const p = CFG.linePays[s];
+    const rows = [5, 4, 3].map(k => `<div><span>${k}</span>${fmt(p[k] / n * bet)}</div>`).join('');
+    return `<div class="sym"><img alt="" src="${view.art.tex[s].toDataURL()}"><div><div class="nm">${CFG.symbols[s].name}</div>${rows}</div></div>`;
+  }).join('');
+  const sc = [5, 4, 3].map(k => `<div><span>${k}</span>${fmt(CFG.scatterPays[k] * bet)} + ${CFG.freeSpins.award[k]} FS</div>`).join('');
+  const lines = CFG.paylines.map((l, i) => `<svg viewBox="0 0 50 34"><rect x="0" y="0" width="50" height="34" rx="3" fill="#13222f"/>${
+    l.map((row, r) => `<rect x="${r * 10 + 1}" y="${row * 11 + 1}" width="8" height="9" rx="1.5" fill="hsl(${(i * 47) % 360},90%,60%)"/>`).join('')}<text x="25" y="33" font-size="0" fill="none">${i + 1}</text></svg>`);
+  $('ptBody').innerHTML = `
+    <div class="grid">${cards}<div class="sym"><img alt="" src="${view.art.tex.S.toDataURL()}"><div><div class="nm">${CFG.symbols.S.name} (scatter)</div>${sc}</div></div></div>
+    <h3>Features</h3>
+    <ul>
+      <li><b>Golden Tusker</b> is WILD: substitutes for every symbol except the Temple scatter, and pays on its own.</li>
+      <li>3, 4 or 5 <b>Temple of the Tooth</b> scatters anywhere pay and award ${CFG.freeSpins.award[3]}, ${CFG.freeSpins.award[4]} or ${CFG.freeSpins.award[5]} <b>Perahera Free Spins</b>.</li>
+      <li>In free spins every win is multiplied by the <b>Perahera multiplier</b>. It starts at x${CFG.freeSpins.multiplierStart} and grows by +${CFG.freeSpins.multiplierStep} after every winning spin (max x${CFG.freeSpins.multiplierMax}). Free spins can retrigger.</li>
+      <li>Maximum win is <b>${CFG.maxWinMultiplier.toLocaleString()}x</b> the total bet; the round ends when it is reached.</li>
+    </ul>
+    <h3>Paylines (${n})</h3>
+    <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:.6cqw">${lines.join('')}</div>
+    <h3>Rules</h3>
+    <p>Wins pay left to right on adjacent reels starting from the leftmost reel. Only the highest win per line is paid. Line wins are shown for the current total bet.
+    Theoretical RTP: 96.10% (prototype math, simulated). Malfunction voids all pays and plays.</p>`;
+}
+
+async function boot() {
+  try { await Promise.race([Promise.all([document.fonts.load(`900 40px "Cinzel"`), document.fonts.load(`900 40px "Cinzel Decorative"`), document.fonts.load(`800 20px "Noto Sans Sinhala"`)]), new Promise(r => setTimeout(r, 2500))]); } catch (e) { /* offline: fall back to system fonts */ }
+  const art = buildTextures();
+  view = new View($('stage'), art);
+  game = new Game(view, new LocalDemoProvider(new MathEngine(CFG)));
+  await game.init();
+  view.startLoop();
+  $('loading').hidden = true; $('btnStart').hidden = false; $('btnStart').focus();
+
+  $('btnStart').onclick = () => { audio.init(); audio.resume(); audio.startMusic('base'); $('start').classList.add('hidden'); };
+  $('spin').onclick = () => { audio.click(); game.press(); };
+  $('stage').addEventListener('pointerdown', () => { if (game.busy) game.skip(); });
+  $('betUp').onclick = () => { if (!game.busy && game.betIdx < BETS.length - 1) { game.betIdx++; audio.click(); ui.update(); } };
+  $('betDown').onclick = () => { if (!game.busy && game.betIdx > 0) { game.betIdx--; audio.click(); ui.update(); } };
+  $('btnAuto').onclick = () => { audio.click(); game.setAuto(!game.auto); };
+  $('btnTurbo').onclick = () => { audio.click(); game.turbo = !game.turbo; ui.update(); };
+  $('btnSound').onclick = e => { audio.setSfx(!audio.sfxOn); e.currentTarget.classList.toggle('on', audio.sfxOn); e.currentTarget.setAttribute('aria-pressed', audio.sfxOn); };
+  $('btnMusic').onclick = e => { audio.setMusic(!audio.musicOn); e.currentTarget.classList.toggle('on', audio.musicOn); e.currentTarget.setAttribute('aria-pressed', audio.musicOn); };
+  $('btnInfo').onclick = () => { buildPaytable(); $('paytable').classList.remove('hidden'); };
+  $('ptClose').onclick = () => $('paytable').classList.add('hidden');
+  $('paytable').addEventListener('click', e => { if (e.target.id === 'paytable') $('paytable').classList.add('hidden'); });
+  addEventListener('keydown', e => {
+    if (e.code === 'Space' && $('start').classList.contains('hidden') && $('paytable').classList.contains('hidden')) { e.preventDefault(); game.press(); }
+    if (e.code === 'Escape') $('paytable').classList.add('hidden');
+  });
+  ui.update();
+}
+boot();
+</script>
+</body>
+</html>
