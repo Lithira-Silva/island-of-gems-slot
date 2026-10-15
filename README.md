@@ -1,6 +1,8 @@
-# Lanka Tusker Treasures: production blueprint
+# Island of Gems: production blueprint
 
-A 5x3, 20-line video slot with a Sri Lankan theme, built the way a studio would build it for **Stake Engine**, the platform Stake uses to publish third-party games on stake.com.
+A 5x3, 20-line video slot with a tropical island theme (gems, wildlife and landscapes; no religious imagery, English only), built the way a studio would build it for **Stake Engine**, the platform Stake uses to publish third-party games on stake.com.
+
+Start with [CLAUDE.md](CLAUDE.md) (rules), [ARCHITECTURE.md](ARCHITECTURE.md) (production target) and [TODO.md](TODO.md) (work queue). Project workflows live in `.claude/skills/`.
 
 This repository holds a **working vertical slice**:
 
@@ -31,7 +33,7 @@ QA helper (browser console, demo provider only):
 
 ---
 
-## 1. Current math model (v0.1.0)
+## 1. Current math model (v0.2.0, the same math as v0.1.0 with the theme renamed)
 
 | Metric | Value |
 |---|---|
@@ -43,11 +45,11 @@ QA helper (browser console, demo provider only):
 | Max win cap | 5,000x |
 
 **Features**
-- **Golden Tusker** (Esala Perahera elephant) is the WILD. It substitutes for every symbol except the scatter and also pays on its own.
-- **Temple** is the SCATTER. Three, four or five scatters pay 3x, 15x or 100x the total bet and award 10, 15 or 20 free spins.
-- **Perahera Free Spins** use richer reels (more wilds). Each winning free spin raises the multiplier by +1, up to x10. Free spins can retrigger.
+- **Golden Elephant** is the WILD. It substitutes for every symbol except the scatter and also pays on its own.
+- **Lion Rock** is the SCATTER. Three, four or five scatters pay 3x, 15x or 100x the total bet and award 10, 15 or 20 free spins.
+- **Gem Rush Free Spins** use richer reels (more wilds). Each winning free spin raises the **Gem Multiplier** by +1, up to x10. Free spins can retrigger.
 
-**Symbols:** Golden Tusker (W), Temple (S), Raksha Mask, Blue Sapphire, Ratnapura Ruby, Cat's Eye, Moonstone (Sandakada Pahana), and the numbers 10, 9, 8 and 7.
+**Symbols:** Golden Elephant (W), Lion Rock (S), Leopard, Blue Sapphire, Star Ruby, Cat's Eye, Moonstone (the gem), and the numbers 10, 9, 8 and 7.
 
 ### Before release
 - **Target the RTP variants Stake asks for.** Studios usually ship several RTP versions. Tune each one by changing reel weights only, then re-run `exact`.
@@ -87,18 +89,19 @@ Production frontend stack (Stake Engine's web-sdk follows this pattern):
 | Spin start | 120 ms wind-up (symbols lift 0.2 cell), 200 ms ease-in acceleration, 60 ms stagger per reel |
 | Spin | 27 cells/s (turbo 42), with a vertical motion-blur texture swap above 7 cells/s |
 | Stop | 150 ms stagger. Target symbols are spliced in four or more cells above the window. The landing curve is easeOutBack (c=1, about 3.7% overshoot), with its start velocity matched to the spin speed so there is no visible jerk |
-| Land | Thud and click per reel. Scatters and wilds pop (+22% scale, 400 ms), with a particle burst and a temple bell whose pitch rises with each scatter |
+| Land | Thud and click per reel. Scatters and wilds pop (+22% scale, 400 ms), with a particle burst and a gem chime whose pitch rises with each scatter |
 | Anticipation | Triggered by 2 scatters on reels 1 to 3. The previous reels settle first, then the next reel spins another 1.5 s with a pulsing gold frame, rising sparks and a riser sound |
 | Line win | Lines draw on over 500 ms with a glow; winning symbols pulse; other symbols dim to 45%. After 1.8 s the display cycles one line at a time with a label, 1.25 s per line |
 | Count-up | 0.5 to 2.4 s depending on win size, with ticks every 60 ms |
-| Big win | 15x, 40x, 100x and 300x tiers: BIG, MEGA, EPIC, MAHA JAYA (මහා ජයග්‍රහණය). Includes rays, a coin fountain, an elastic tier-up and a fanfare |
-| Free spins | Gong plus fanfare, then an intro with a tusker procession. The scene switches to the torch-lit festival night with a faster drum loop and a horanewa-style reed melody. The multiplier pill pops on each step |
+| Big win | 15x, 40x, 100x and 300x tiers: BIG, MEGA, EPIC, LEGENDARY. Includes rays, a coin fountain, an elastic tier-up and a fanfare |
+| Free spins | Impact hit plus fanfare, then an intro with an elephant herd crossing. The scene switches to the lantern-lit Gem Rush night with a faster drum loop and a reed-horn melody. The multiplier pill pops on each step |
 
 Production art replaces the procedural placeholders. Each symbol needs **idle, land and win** Spine animations:
-- **Tusker:** ears flap, trunk raises, caparison lights twinkle
-- **Mask:** eyes roll, cobra hoods flare
+- **Golden Elephant:** ears flap, trunk raises, crown gems twinkle
+- **Lion Rock:** paws flex, sun rays sweep, dust falls from the cliff
+- **Leopard:** blinks, ears twitch, a snarl on win
 - **Gems:** specular sweep and sparkle
-- **Moonstone:** the bands rotate slowly
+- **Moonstone:** the blue sheen drifts across the stone
 - **Numbers:** a gold shine sweep
 
 Export at 2x for desktop and at a 1x tier for low-end mobile. Use WebP atlases and keep the initial load under about 5 MB.
@@ -108,26 +111,24 @@ Export at 2x for desktop and at a 1x tier for low-end mobile. Use WebP atlases a
 ## 4. Audio plan
 
 The prototype synthesizes everything in WebAudio so it runs with no assets. For production:
-- **Record or license real instruments:** geta bera, yak bera, thammattama, davula, horanewa, udekki, and temple bells. Kandyan drumming carries the identity of this game.
+- **Record or license real instruments:** hand drums, frame drums, a reed horn, marimba-style gem chimes, an elephant trumpet, and ocean and rainforest ambience. Use no religious bells or chants. Driving island drumming carries the identity of this game.
 - **Music:** a base loop, a free-spins loop (more intense), and big-win stingers. Use stems so that layers can be added as tension builds.
 - **SFX map:** spin start, reel loop, reel stop ×5 variants, scatter land 1/2/3, anticipation riser, win tiers 1 to 3, count tick, coin, multiplier up, free-spins intro and outro, and button clicks.
 - **Delivery:** master to about −16 LUFS integrated, deliver OGG and AAC sprites, duck the music under big wins, and keep separate mute controls for music and SFX (already in the UI).
 
 ---
 
-## 5. ⚠ Cultural and legal checks (do these first)
+## 5. Theme and legal checks
 
-1. **Sacred imagery.** The scatter depicts the *Temple of the Tooth* (Sri Dalada Maligawa), and the background includes a stupa (Ruwanwelisaya). Many Sri Lankans would find sacred Buddhist sites in a gambling product offensive, and Sri Lanka has acted strongly over misuse of Buddhist imagery before. **Recommendation:** replace the scatter with a non-religious icon before going public. Good options are the Sigiriya Lion Gate, a Kandyan dancer's headdress, or a Perahera drum. Swap the stupa for Sigiriya or Galle Fort. Only the art changes; the math is unaffected.
-2. **Your own jurisdiction.** Get local legal advice on developing and supplying gambling software as a Sri Lankan resident, and on receiving revenue from it.
+1. **Theme rules (applied in v0.2.0).** No religious imagery and no Sinhala or Tamil words; every player-facing string is English. The temple scatter, stupa, ritual mask, carved moonstone and Sinhala text were removed. The full rules are in [CLAUDE.md](CLAUDE.md), and the scanner is `.claude/skills/theme-guard`. Still to do: an independent sensitivity review of the final commissioned art.
+2. **Your own jurisdiction.** Get local legal advice on developing and supplying gambling software, and on receiving revenue from it.
 3. **Stake Engine terms.** Check the onboarding requirements, the revenue share, the jurisdictions where your game will be offered, and the required responsible-gambling features (for example autoplay limits and reality checks).
-
----
 
 ## 6. Delivery roadmap
 
 | Phase | Output | Rough time (small team) |
 |---|---|---|
-| 0. Concept | GDD, cultural review, symbol sheet, moodboard | 1–2 wks |
+| 0. Concept | GDD, theme review, symbol sheet, moodboard | 1–2 wks |
 | 1. Math | Final model, RTP variants, 100M-round reports, optimized books | 2–3 wks |
 | 2. Art | Key art, symbols, background layers, Spine animations, UI kit | 6–8 wks |
 | 3. Audio | Recorded or licensed instruments, music stems, SFX, mix | 3–4 wks (parallel) |

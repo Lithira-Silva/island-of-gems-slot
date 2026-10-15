@@ -1,17 +1,17 @@
 {
-  "gameId": "lanka_tusker_treasures",
-  "name": "Lanka Tusker Treasures",
-  "version": "0.1.0",
+  "gameId": "island_of_gems",
+  "name": "Island of Gems",
+  "version": "0.2.0",
   "reels": 5,
   "rows": 3,
   "targetRtp": 0.96,
   "maxWinMultiplier": 5000,
   "symbols": {
-    "W":  { "name": "Golden Tusker",       "kind": "wild",    "label": "WILD" },
-    "S":  { "name": "Temple of the Tooth", "kind": "scatter", "label": "BONUS" },
-    "H1": { "name": "Raksha Mask",         "kind": "high",    "label": "" },
+    "W":  { "name": "Golden Elephant",     "kind": "wild",    "label": "WILD" },
+    "S":  { "name": "Lion Rock"          , "kind": "scatter", "label": "BONUS" },
+    "H1": { "name": "Leopard",             "kind": "high",    "label": "" },
     "H2": { "name": "Blue Sapphire",       "kind": "high",    "label": "" },
-    "H3": { "name": "Ratnapura Ruby",      "kind": "high",    "label": "" },
+    "H3": { "name": "Star Ruby",           "kind": "high",    "label": "" },
     "H4": { "name": "Cat's Eye",           "kind": "high",    "label": "" },
     "H5": { "name": "Moonstone",           "kind": "high",    "label": "" },
     "L1": { "name": "10",                  "kind": "low",     "label": "10" },
@@ -40,7 +40,7 @@
     "multiplierStart": 1,
     "multiplierStep": 1,
     "multiplierMax": 10,
-    "_rule": "Each free-spin win is multiplied by the current Perahera multiplier, which then grows by multiplierStep (capped)."
+    "_rule": "Each free-spin win is multiplied by the current Gem Multiplier, which then grows by multiplierStep (capped)."
   },
   "paylines": [
     [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [0,1,2,1,0], [2,1,0,1,2],

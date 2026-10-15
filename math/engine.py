@@ -1,4 +1,4 @@
-"""Reference math engine for Lanka Tusker Treasures.
+"""Reference math engine for Island of Gems.
 
 This module is the single source of truth for game rules. The frontend demo
 (frontend/index.html, `MathEngine`) mirrors it 1:1 and must stay in sync.
