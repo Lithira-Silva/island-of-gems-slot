@@ -819,10 +819,6 @@ class View {
     }
     const rnd = seeded(7);
     this.stars = Array.from({ length: 150 }, () => ({ x: rnd() * W, y: rnd() * H * .55, r: rnd() * 1.3 + .3, p: rnd() * TAU }));
-    this.lanterns = [
-      { x: 70, len: 70, s: 20, hue: 350, p: 0 }, { x: 160, len: 120, s: 16, hue: 45, p: 1.3 },
-      { x: 1120, len: 110, s: 17, hue: 200, p: 2.1 }, { x: 1210, len: 65, s: 21, hue: 290, p: .6 },
-    ];
   }
   paintBackground(mode) {
     const [cv, c] = mkCanvas(W * 2, H * 2); c.scale(2, 2);
@@ -844,9 +840,25 @@ class View {
       c.lineTo(W, H); c.closePath(); c.fill();
     });
     const sil = free ? '#1a0508' : '#0d0a1f';
-    c.fillStyle = sil; c.beginPath(); // Sigiriya
-    c.moveTo(0, H); c.lineTo(30, 600); c.bezierCurveTo(50, 520, 70, 470, 96, 440); c.lineTo(214, 430); c.bezierCurveTo(236, 450, 250, 520, 268, 600); c.lineTo(300, H); c.closePath(); c.fill();
-    c.strokeStyle = free ? 'rgba(255,140,60,.35)' : 'rgba(200,190,255,.18)'; c.lineWidth = 2; c.beginPath(); c.moveTo(96, 440); c.lineTo(214, 430); c.bezierCurveTo(236, 450, 250, 520, 268, 600); c.stroke();
+    // Lion Rock: flat-topped rock fortress rising from the jungle behind the reels, lion-paw platform at its foot
+    const rock = free ? '#2c0b14' : '#191440', rockHi = free ? 'rgba(255,150,70,.42)' : 'rgba(205,195,255,.24)';
+    const skyGlow = c.createRadialGradient(140, 300, 40, 140, 300, 280); // sky glow so the silhouette reads against the dusk
+    skyGlow.addColorStop(0, free ? 'rgba(255,120,50,.32)' : 'rgba(170,130,220,.3)'); skyGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = skyGlow; c.fillRect(0, 0, 440, 600);
+    c.fillStyle = rock; c.beginPath();
+    c.moveTo(-10, H); c.lineTo(-10, 520); c.lineTo(8, 500); c.lineTo(46, 496);
+    c.bezierCurveTo(36, 440, 30, 370, 50, 310); c.bezierCurveTo(56, 280, 64, 258, 84, 250);
+    c.lineTo(150, 243); c.lineTo(198, 248); c.bezierCurveTo(216, 258, 224, 292, 228, 334);
+    c.lineTo(234, 470); c.lineTo(276, 528); c.lineTo(310, H); c.closePath(); c.fill();
+    for (let x = 88; x < 200; x += 9) { c.beginPath(); c.arc(x, 247 - (x > 150 ? (198 - x) * .02 : 0), 4 + rnd() * 5, Math.PI, 0); c.fill(); } // summit trees
+    c.strokeStyle = free ? 'rgba(0,0,0,.28)' : 'rgba(0,0,10,.3)'; c.lineWidth = 3;
+    [[74, 270, 66, 470], [112, 262, 108, 480], [150, 258, 152, 476], [190, 262, 200, 470]].forEach(([x1, y1, x2, y2]) => { c.beginPath(); c.moveTo(x1, y1); c.quadraticCurveTo((x1 + x2) / 2 + 6, (y1 + y2) / 2, x2, y2); c.stroke(); });
+    c.strokeStyle = rockHi; c.lineWidth = 2; c.beginPath(); c.moveTo(84, 250); c.lineTo(150, 243); c.lineTo(198, 248); c.bezierCurveTo(216, 258, 224, 292, 228, 334); c.lineTo(234, 470); c.stroke();
+    c.fillStyle = free ? '#4a1a1c' : '#2c2660'; // lion paws on the entrance platform
+    [10, 34].forEach(px => { c.beginPath(); c.roundRect(px, 482, 16, 16, [8, 8, 2, 2]); c.fill(); });
+    c.strokeStyle = rock; c.lineWidth = 1.5; [10, 34].forEach(px => { for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(px + k * 4, 486); c.lineTo(px + k * 4, 498); c.stroke(); } });
+    const mist = c.createLinearGradient(0, 440, 0, 580); mist.addColorStop(0, 'rgba(0,0,0,0)'); mist.addColorStop(1, free ? 'rgba(120,30,20,.45)' : 'rgba(60,50,110,.5)');
+    c.fillStyle = mist; c.fillRect(0, 440, 330, 140);
     // coastal lighthouse on the old fort rampart
     const lx = 1150, ly = 640;
     const lt = c.createLinearGradient(lx - 30, 0, lx + 30, 0);
@@ -962,7 +974,6 @@ class View {
     c.fillStyle = '#fff';
     for (const s of this.stars) { c.globalAlpha = .35 + .35 * Math.sin(t * 2 + s.p); c.fillRect(s.x, s.y, s.r, s.r); }
     c.globalAlpha = 1;
-    this.drawLanterns(c, t);
     if (this.mode === 'free') { this.drawTorch(c, 176, 470, t); this.drawTorch(c, 1104, 470, t + 1.7); }
     this.drawParticles(c, ['firefly', 'ember']);
     this.drawHeader(c, t);
@@ -974,28 +985,6 @@ class View {
     this.drawParticles(c, ['coin']);
   }
 
-  drawLanterns(c, t) {
-    for (const L of this.lanterns) {
-      const sway = Math.sin(t * 1.1 + L.p) * .09;
-      c.save(); c.translate(L.x, 0); c.rotate(sway);
-      c.strokeStyle = 'rgba(30,20,10,.8)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, L.len); c.stroke();
-      c.translate(0, L.len + L.s);
-      c.globalCompositeOperation = 'lighter'; c.globalAlpha = .55 + .1 * Math.sin(t * 3 + L.p);
-      c.drawImage(this.glows.gold, -L.s * 3, -L.s * 3, L.s * 6, L.s * 6);
-      c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
-      const s = L.s;
-      for (const rot of [0, Math.PI / 4]) {
-        c.save(); c.rotate(rot);
-        const g = c.createRadialGradient(0, 0, 2, 0, 0, s * 1.2); g.addColorStop(0, `hsla(${L.hue},100%,88%,.95)`); g.addColorStop(1, `hsla(${L.hue},85%,50%,.85)`);
-        c.fillStyle = g; c.fillRect(-s * .72, -s * .72, s * 1.44, s * 1.44);
-        c.strokeStyle = `hsla(${L.hue},70%,25%,.9)`; c.lineWidth = 1.2; c.strokeRect(-s * .72, -s * .72, s * 1.44, s * 1.44);
-        c.restore();
-      }
-      c.strokeStyle = `hsla(${(L.hue + 40) % 360},90%,60%,.9)`; c.lineWidth = 2;
-      for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(k * 4, s); c.quadraticCurveTo(k * 4 + Math.sin(t * 2 + k) * 4, s + 18, k * 5 + Math.sin(t * 2.4 + k) * 6, s + 34); c.stroke(); }
-      c.restore();
-    }
-  }
   drawTorch(c, x, y, t) {
     c.fillStyle = '#2a1408'; c.fillRect(x - 4, y, 8, 120);
     c.fillStyle = goldGrad(c, x - 14, y - 6, x + 14, y + 6); c.beginPath(); c.moveTo(x - 16, y - 4); c.lineTo(x + 16, y - 4); c.lineTo(x + 8, y + 8); c.lineTo(x - 8, y + 8); c.closePath(); c.fill();

@@ -21,7 +21,7 @@ RELIGIOUS = [
     "buddha", "buddhist", "bodhi", "hindu", "deity", "deities", "god", "gods", "goddess", "demon", "devil",
     "monk", "priest", "nun", "relic", "tooth relic", "prayer", "pray", "praying", "holy", "sacred", "blessing",
     "ritual", "exorcism", "pilgrim", "pilgrimage", "vesak", "poson", "esala", "perahera", "maligawa", "dalada",
-    "pirith", "naga", "hamsa", "halo", "lotus throne", "sandakada", "pahana",
+    "pirith", "lantern", "lanterns", "naga", "hamsa", "halo", "lotus throne", "sandakada", "pahana",
 ]
 # Sinhala / Tamil words and transliterations that crept in before.
 NON_ENGLISH = [

@@ -94,7 +94,7 @@ Production frontend stack (Stake Engine's web-sdk follows this pattern):
 | Line win | Lines draw on over 500 ms with a glow; winning symbols pulse; other symbols dim to 45%. After 1.8 s the display cycles one line at a time with a label, 1.25 s per line |
 | Count-up | 0.5 to 2.4 s depending on win size, with ticks every 60 ms |
 | Big win | 15x, 40x, 100x and 300x tiers: BIG, MEGA, EPIC, LEGENDARY. Includes rays, a coin fountain, an elastic tier-up and a fanfare |
-| Free spins | Impact hit plus fanfare, then an intro with an elephant herd crossing. The scene switches to the lantern-lit Gem Rush night with a faster drum loop and a reed-horn melody. The multiplier pill pops on each step |
+| Free spins | Impact hit plus fanfare, then an intro with an elephant herd crossing. The scene switches to the torch-lit Gem Rush night under Lion Rock with a faster drum loop and a reed-horn melody. The multiplier pill pops on each step |
 
 Production art replaces the procedural placeholders. Each symbol needs **idle, land and win** Spine animations:
 - **Golden Elephant:** ears flap, trunk raises, crown gems twinkle

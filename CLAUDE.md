@@ -5,11 +5,11 @@ Island of Gems is a 5x3, 20-line video slot built for **Stake Engine** (Stake's 
 ## Hard rules (never break these)
 
 ### 1. Theme: culture and nature, never religion
-The theme is a tropical island of gems, wildlife, landscapes and craft culture. Run the `theme-guard` skill before you commit any art, text, audio or naming change.
+The theme is a tropical island of gems, wildlife, landscapes and craft culture. Lion Rock stands large in the background of both scenes. Run the `theme-guard` skill before you commit any art, text, audio or naming change.
 
-**Allowed:** gemstones (sapphire, ruby, cat's eye, moonstone *gem*, topaz, garnet); wildlife (elephant, leopard, peacock, sea turtle, blue whale); landscapes (Lion Rock fortress, rainforest, tea hills, waterfalls, coast, lighthouse, old fort ramparts); and non-religious craft and performance (gem mining, drums, dance, lanterns, batik, spices, trade ships).
+**Allowed:** gemstones (sapphire, ruby, cat's eye, moonstone *gem*, topaz, garnet); wildlife (elephant, leopard, peacock, sea turtle, blue whale); landscapes (Lion Rock fortress, rainforest, tea hills, waterfalls, coast, lighthouse, old fort ramparts); and non-religious craft and performance (gem mining, drums, dance, batik, spices, trade ships).
 
-**Banned:** temples, stupas, shrines, churches, mosques, kovils, relics, monks, priests, deities, gods, demons, prayer and ritual imagery, religious festivals or processions, lotus-throne or halo motifs, carved temple stones (including the carved "moonstone" step), cobra/naga crowns, and exorcism or devil masks. If an item has any religious reading, leave it out.
+**Banned:** temples, stupas, shrines, churches, mosques, kovils, relics, monks, priests, deities, gods, demons, prayer and ritual imagery, religious festivals or processions, lotus-throne or halo motifs, carved temple stones (including the carved "moonstone" step), lanterns of any kind (hanging festival lanterns read as religious), cobra/naga crowns, and exorcism or devil masks. If an item has any religious reading, leave it out.
 
 ### 2. English only
 Every player-facing string is plain English: UI, paytable, symbol names, feature names, big-win tiers, audio cue names, file and asset names, and code identifiers. That means no Sinhala or Tamil words, no transliterations (for example *perahera*, *jaya*, *maha*, *ratna*) and no non-Latin script. Use English descriptions for instruments ("hand drum", "reed horn"). Real place names are not needed in-game; use descriptive English ("Lion Rock").
@@ -46,6 +46,30 @@ QA in the browser console: `game.provider.force(r => r.events.some(e => e.type =
 | `math/simulate.py` | Exact RTP, Monte Carlo, books and lookup tables |
 | `frontend/index.html` | Prototype layers: MathEngine, OutcomeProvider, Game controller, View (canvas) and SoundEngine |
 | `.claude/skills/` | Project workflows: theme-guard, math-tune, parity-check, new-feature, release-check |
+
+## Skills: which one to use, and when
+
+Use a skill whenever its trigger matches. When a task touches several areas, run every matching skill, in the order shown below.
+
+**Project skills** (`.claude/skills/`, checked in):
+
+| Skill | Run it when | Notes |
+|---|---|---|
+| `theme-guard` | Any change to art, backgrounds, text, audio cue names, identifiers or asset names, and before every commit | Run `python -I .claude/skills/theme-guard/scripts/check_theme.py`. It scans code identifiers too, so a variable named `halo` fails. Do the manual art review from the skill as well |
+| `math-tune` | Any edit to `math/game_design.json` (paytable, reels, free spins, max win, bet modes) | Rule 5 applies: fresh `exact` and `mc` numbers, then update the README stats |
+| `parity-check` | Any change to evaluation rules, paylines, wilds, scatters or free spins, in `engine.py` or the JS `MathEngine` | Not needed for art-only or UI-only changes |
+| `new-feature` | Any new mechanic, symbol or bet mode | Covers all six layers: spec, math, client engine, presentation, player info, docs/tests |
+| `release-check` | Before tagging a version or submitting to Stake Engine | Report all 10 gates with evidence |
+
+**User-level design skills** (installed in `~/.claude/skills/`, not in the repo):
+
+| Skill | Run it when | Notes |
+|---|---|---|
+| `ui-ux-pro-max` | Any change to how the game looks, moves or is touched: backgrounds, HUD, paytable, dialogs, motion | Use targeted `--domain ux` / `--domain style` queries. Its product and design-system database has **no casino or slot match**: do not adopt its generated SaaS palettes or fonts, and keep the gold-on-night look of this game. Verified rules to apply: text contrast 4.5:1, touch targets ≥ 44 px, honour `prefers-reduced-motion`, subtle parallax, 1–2 animated focal elements per view, and clear silhouettes against the sky (layered depth) |
+| `frontend-design`, `ui-styling`, `web-design-guidelines` | UI kit and HUD work during the production port (TODO Phase 4) | These advise only. The theme rules and the compact `index.html` style always come first |
+| `img2threejs` | Turning a concept image of a symbol or prop (Golden Elephant, Leopard, Lion Rock, gems) into a procedural 3D model. Use its PNG turntable renders as 2D sprite sources or for Spine reference (TODO Phase 2) | It needs a reference image the user supplies or approves, and it builds the model in code (no downloaded art). It can also export GLB. The game itself renders in Canvas2D now and PixiJS later, so no Three.js ships in the game build. Run `theme-guard` on the model's names and do the manual art review on its renders |
+
+Results from the design skills are only recommendations. The hard rules above win over them every time.
 
 ## Symbol bible (v0.2)
 

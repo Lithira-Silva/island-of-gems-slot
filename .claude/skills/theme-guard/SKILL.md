@@ -23,7 +23,7 @@ The scanner only reads text. Review drawn and described art by hand against this
 | Never | Use instead |
 |---|---|
 | Temple, stupa, shrine, any place of worship | Lion Rock fortress, lighthouse, fort ramparts, waterfalls, tea hills |
-| Religious festival, procession, ceremonial parasol | Elephant herd crossing, lantern-lit night market, fireflies |
+| Religious festival, procession, ceremonial parasol, festival lanterns | Elephant herd crossing, Lion Rock at night, torches, fireflies |
 | Carved temple-step "moonstone" (half-circle with animal rings and lotus) | The moonstone **gem**: a milky cabochon with a blue sheen |
 | Demon, exorcism or ritual masks; naga or cobra crowns | Leopard, peacock, sea turtle, blue whale |
 | Halos, lotus thrones, prayer gestures, bells or chants | Gem glints, gold filigree, sun rays, marimba-style chimes |

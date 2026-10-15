@@ -8,6 +8,8 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 ## Phase 0: Theme and compliance reset (P0)
 - [x] Remove the religious scatter (temple) and replace it with **Lion Rock**
 - [x] Remove the stupa from the background and replace it with a coastal lighthouse on fort ramparts
+- [x] Put **Lion Rock** large in the background (left of the reels, lion-paw platform, summit trees, mist)
+- [x] Remove the hanging festival lanterns (religious reading); the scanner now flags "lantern"
 - [x] Replace the Raksha mask (ritual/demon reading) with **Leopard**
 - [x] Replace the carved temple-step moonstone with the **Moonstone gem**
 - [x] Remove every Sinhala string and font, so the big-win tiers become BIG / MEGA / EPIC / LEGENDARY
@@ -38,8 +40,9 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [ ] Moodboard and style frame: a jewel-toned tropical night, rainforest canopy, glowing gems and gold filigree
 - [ ] Key art: the Golden Elephant in front of Lion Rock at sunset (for the lobby tile, social posts and the loading screen)
 - [ ] Symbol set at 2x: Golden Elephant, Lion Rock, Leopard, Blue Sapphire, Star Ruby, Cat's Eye, Moonstone. Replace the numeric lows with gem-cut **A K Q J 10** or keep 10–7 (decide)
+- [ ] (Optional) Use the `img2threejs` skill to turn approved concept art into procedural 3D models, then render them to PNG as symbol sprite sources and Spine reference
 - [ ] Spine animations (idle, land, win) for every symbol, plus a full-screen Golden Elephant trumpet for big wins
-- [ ] Backgrounds in 4 parallax layers × 2 modes (base dusk and the Gem Rush night with lanterns and fireflies), in landscape and portrait
+- [ ] Backgrounds in 4 parallax layers × 2 modes (base dusk and the Gem Rush night with torches and fireflies, Lion Rock in the back), in landscape and portrait
 - [ ] UI kit: spin button, bet pill, balance, autoplay panel, settings, paytable, and the buy-feature dialog
 - [ ] Big-win cards for 4 tiers, the Gem Rush intro and outro, and the max-win screen
 - [ ] Atlas pipeline (`tools/assets`) producing WebP at 2x and 1x, with KTX2 for backgrounds
@@ -67,7 +70,8 @@ Details for each item are in [ARCHITECTURE.md](ARCHITECTURE.md). The rules are i
 - [ ] Settings: sound and music volume, turbo, quick spin, reduced motion, and space-to-spin
 - [ ] Autoplay with limits (count, loss limit, single-win limit, stop on feature)
 - [ ] Jurisdiction profiles (minimum spin time, turbo, slam stop and autoplay switches)
-- [ ] `prefers-reduced-motion` mode and a colour-blind-safe payline palette
+- [ ] `prefers-reduced-motion` mode and a colour-blind-safe payline palette. The prototype ignores it today: fireflies, embers, star twinkle and the coin shower always animate (flagged by `ui-ux-pro-max`)
+- [ ] Touch targets ≥ 44 px on phones. The prototype's `.sq`, `.icon` and `.tog` buttons are sized in `cqw` and shrink far below that on a 375 px screen (flagged by `ui-ux-pro-max`)
 - [ ] Self-hosted, subsetted fonts with no runtime Google Fonts
 - [ ] Remove the legacy `frontend/index.html` once the port reaches parity
 
